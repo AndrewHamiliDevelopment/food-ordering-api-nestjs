@@ -16,7 +16,7 @@ async function bootstrap() {
   const configService = app.get<ConfigService>(ConfigService);
 
   const port = configService.getOrThrow<number>('PORT');
-  const env = configService.getOrThrow<number>('ENV');
+  const env = configService.getOrThrow<number>('NODE_ENV');
   const baseUrl = configService.getOrThrow<string>('APP_BASE_URL');
 
   const config = new DocumentBuilder()

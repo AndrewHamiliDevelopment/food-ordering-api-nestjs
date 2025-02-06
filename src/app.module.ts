@@ -4,9 +4,10 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { FirebaseMiddleware } from './firebase/firebase.middleware';
 import { DatabaseModule } from './database/database.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [UsersModule, DatabaseModule],
+  imports: [ConfigModule.forRoot({isGlobal: true}), UsersModule, DatabaseModule],
   controllers: [AppController],
   providers: [AppService],
 })
