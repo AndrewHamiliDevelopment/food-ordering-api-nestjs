@@ -5,14 +5,11 @@ import {
   NestMiddleware,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 
 import * as firebase from 'firebase-admin';
 import { isEmpty } from 'lodash';
-import { Claim } from 'src/interfaces';
 import {
-  ClaimError,
   ErrorModel,
   ExtendedRequest,
   firebaseGetAppClaims,
@@ -21,7 +18,7 @@ import {
   Role,
 } from 'src/shared';
 import { User } from 'src/users/entities/user.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class FirebaseMiddleware implements NestMiddleware {
