@@ -8,7 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableVersioning();
-  app.useGlobalPipes(new ValidationPipe({transform: true}));
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.enableCors();
 
   const logger = new Logger(bootstrap.name);
@@ -20,21 +20,30 @@ async function bootstrap() {
   const baseUrl = configService.getOrThrow<string>('APP_BASE_URL');
 
   const config = new DocumentBuilder()
-  .setTitle('Food Ordering API')
-  .setDescription('Food Ordering API')
-  .addServer(`http://localhost:${port}`, 'local')
-  .addServer(baseUrl, 'production')
-  .build();
+    .setTitle('Food Ordering API')
+    .setDescription('Food Ordering API')
+    .addServer(`http://localhost:${port}`, 'local')
+    .addServer(baseUrl, 'production')
+    .addBearerAuth(
+      {
+        description: `Please enter token in following format: Bearer <JWT>`,
+        name: 'Authorization',
+        bearerFormat: 'Bearer',
+        scheme: 'Bearer',
+        type: 'http',
+        in: 'Header',
+      },
+      'access-token',
+    )
+    .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('swagger-doc', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
 
-  logger.log(`Server started at port ${port}`)
-  logger.log(`local access: http://localhost:${port}`)
-  logger.log(`Production access: ${baseUrl}`)
-
-
+  logger.log(`Server started at port ${port}`);
+  logger.log(`local access: http://localhost:${port}`);
+  logger.log(`Production access: ${baseUrl}`);
 }
 bootstrap();

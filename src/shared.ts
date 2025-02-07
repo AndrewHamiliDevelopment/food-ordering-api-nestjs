@@ -3,6 +3,7 @@ import { v4 as v4uuid } from 'uuid';
 import { Request } from 'express';
 import { User } from './users/entities/user.entity';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
+import { has } from 'lodash';
 
 export enum Role {
   SUPERADMIN = 'SUPERADMIN',
@@ -42,7 +43,9 @@ export const firebaseCreateUser = async (props: {
   const password = v4uuid();
   console.log('🚀 ~ password:', password);
   try {
-    const userRecord = await firebase.auth().createUser({ email, emailVerified, password });
+    const userRecord = await firebase
+      .auth()
+      .createUser({ email, emailVerified, password });
     return userRecord;
   } catch (error) {
     console.error('error', error);
@@ -113,6 +116,7 @@ export const firebaseGetOrCreateUser = async (props: {
 }) => {
   const { email, emailVerified } = props;
   let userRecord: ExtendedUserRecord | null = null;
+  console.log('🚀 ~ userRecord:', userRecord);
   try {
     userRecord = await firebase.auth().getUserByEmail(email);
     if (userRecord !== null) {
