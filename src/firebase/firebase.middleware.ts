@@ -44,7 +44,7 @@ export class FirebaseMiddleware implements NestMiddleware {
     this.env = this.configService.getOrThrow<string>('NODE_ENV');
     this.projectId = projectId;
     this.logger.log('FIREBASE', { projectId, privateKey, clientEmail });
-    const fApp = firebase.initializeApp({
+    firebase.initializeApp({
       credential: firebase.credential.cert({
         projectId,
         privateKey,

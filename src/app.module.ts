@@ -10,12 +10,16 @@ import { UsersModule } from './users/users.module';
 import { FirebaseMiddleware } from './firebase/firebase.middleware';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
+import { CategoryModule } from './category/category.module';
+import { ResourceModule } from './resource/resource.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     UsersModule,
     DatabaseModule,
+    CategoryModule,
+    ResourceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
