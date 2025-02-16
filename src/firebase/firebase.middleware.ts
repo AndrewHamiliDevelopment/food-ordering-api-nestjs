@@ -65,13 +65,13 @@ export class FirebaseMiddleware implements NestMiddleware {
   async use(req: ExtendedRequest, res: any, next: () => void) {
     //next();
     let token = req.headers.authorization;
-    console.log('🚀 ~ FirebaseMiddleware ~ use ~ token:', token);
+    this.logger.log('🚀 ~ FirebaseMiddleware ~ use ~ token:', token);
     const errorMessages: ErrorModel[] = [];
     try {
       if (typeof token !== 'undefined') {
         token = token.replace('Bearer ', '');
         if (token === this.internalToken) {
-          this.logger.log('USES INTERNAL TOKEN');
+          this.logger.log('===== USES INTERNAL TOKEN =====');
           req.role = Role.SUPERADMIN;
         } else {
           const decodedToken = await firebaseVerifyIdToken({ idToken: token });

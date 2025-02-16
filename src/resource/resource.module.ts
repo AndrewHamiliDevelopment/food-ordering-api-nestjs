@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Resource } from './entities/resource.entity';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
+import { ResourcePublicController } from './resource-public.controller';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     }),
   ],
-  controllers: [ResourceController],
+  controllers: [ResourceController, ResourcePublicController],
   providers: [ResourceService],
 })
 export class ResourceModule {}

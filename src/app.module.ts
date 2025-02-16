@@ -12,6 +12,9 @@ import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { CategoryModule } from './category/category.module';
 import { ResourceModule } from './resource/resource.module';
+import { UsersController } from './users/users.controller';
+import { ResourceController } from './resource/resource.controller';
+import { CategoryController } from './category/category.controller';
 
 @Module({
   imports: [
@@ -26,9 +29,8 @@ import { ResourceModule } from './resource/resource.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(FirebaseMiddleware).forRoutes({
-      path: '/v1/*',
-      method: RequestMethod.ALL,
-    });
+    consumer
+      .apply(FirebaseMiddleware)
+      .forRoutes(UsersController, ResourceController, CategoryController);
   }
 }

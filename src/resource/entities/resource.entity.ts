@@ -13,12 +13,15 @@ export class Resource extends BaseEntity {
   @Column({ default: true })
   @ApiProperty()
   enabled: boolean;
-  url: string;
+  urls: { info: string; file: string };
 
   @AfterLoad()
   generateURL() {
     console.log('==========');
-    this.url = `${process.env.RESOURCE_UPLOAD_PATH}/${this.filename}`;
+    this.urls = {
+      info: `${process.env.APP_BASE_URL}/v1/resource/${this.id}`,
+      file: `${process.env.APP_BASE_URL}/v1/resource/file/${this.id}`,
+    };
   }
 
   constructor(resource: Partial<Resource>) {

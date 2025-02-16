@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-@Tree('nested-set')
+@Tree('closure-table')
 export class Category extends BaseEntity {
   @Column({ nullable: false })
   @ApiProperty()

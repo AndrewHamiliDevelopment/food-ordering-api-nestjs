@@ -11,7 +11,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ResourceService } from './resource.service';
-import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import {
+  ApiOkPaginatedResponse,
+  ApiPaginationQuery,
+  Paginate,
+  PaginateQuery,
+} from 'nestjs-paginate';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
@@ -20,6 +25,8 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { resourcePaginateConfig } from 'src/paginate.config';
+import { Resource } from './entities/resource.entity';
 
 @Controller({ path: 'resource', version: '1' })
 @ApiBearerAuth('access-token')
@@ -29,6 +36,8 @@ export class ResourceController {
   constructor(private readonly resourceService: ResourceService) {}
 
   @Get()
+  @ApiPaginationQuery(resourcePaginateConfig)
+  @ApiOkPaginatedResponse(Resource, resourcePaginateConfig)
   list(@Paginate() query: PaginateQuery) {
     this.logger.log('list', query);
     return this.resourceService.list(query);

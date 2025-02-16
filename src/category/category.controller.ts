@@ -20,6 +20,10 @@ export class CategoryController {
     this.logger.log('list', query);
     return this.categoryService.list(query);
   }
+  @Get('tree')
+  listTree() {
+    return this.categoryService.listTree();
+  }
   @Post()
   create(@Body() dto: CategoryAddDto) {
     this.logger.log('Create', dto);
