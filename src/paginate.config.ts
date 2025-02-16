@@ -13,6 +13,7 @@ export const categoryPaginateConfig: PaginateConfig<Category> = {
   defaultLimit: 10,
   defaultSortBy: [['dateEntry', 'DESC']],
   sortableColumns: ['dateEntry'],
+  relations: ['thumbnail'],
 };
 
 export const resourcePaginateConfig: PaginateConfig<Resource> = {

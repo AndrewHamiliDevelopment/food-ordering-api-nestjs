@@ -21,6 +21,7 @@ export class CategoryAddDto {
   @IsNumber()
   @Min(1)
   @IsNotEmpty()
+  @ApiProperty()
   @ValidateIf((v) => v.thumbnailId !== null)
   thumbnailId: number;
 }
