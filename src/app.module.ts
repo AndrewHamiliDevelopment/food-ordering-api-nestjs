@@ -17,6 +17,7 @@ import { ResourceController } from './resource/resource.controller';
 import { CategoryController } from './category/category.controller';
 import { ProductModule } from './product/product.module';
 import { ProductController } from './product/product.controller';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ProductController } from './product/product.controller';
     CategoryModule,
     ResourceModule,
     ProductModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService],
