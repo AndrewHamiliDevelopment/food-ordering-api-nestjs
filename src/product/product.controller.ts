@@ -1,12 +1,18 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Patch } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { ApiOkPaginatedResponse, ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
+import {
+  ApiOkPaginatedResponse,
+  ApiPaginationQuery,
+  Paginate,
+  PaginateQuery,
+} from 'nestjs-paginate';
 import { ProductCreateDto } from './dto/product-create.dto';
 import { productPaginateConfig } from 'src/paginate.config';
 import { Product } from './entities/product.entity';
+import { ProductUpdateDto } from './dto/product-update.dto';
 
-@Controller({ path: 'product', version: '1' })
+@Controller({ path: 'products', version: '1' })
 @ApiTags('Product')
 @ApiBearerAuth('access-token')
 export class ProductController {
@@ -22,5 +28,9 @@ export class ProductController {
   @Post()
   create(@Body() dto: ProductCreateDto) {
     return this.productService.create(dto);
+  }
+  @Patch(':id')
+  update(@Param('id') id: number, @Body() dto: ProductUpdateDto) {
+    return this.productService.update({ id, dto });
   }
 }

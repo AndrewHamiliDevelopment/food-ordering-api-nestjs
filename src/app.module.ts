@@ -41,9 +41,9 @@ export class AppModule implements NestModule {
     consumer
       .apply(FirebaseMiddleware)
       .exclude(
-        { path: '/v1/category', method: RequestMethod.GET },
+        { path: '/v1/categories', method: RequestMethod.GET },
         { path: '/v1/payment-method', method: RequestMethod.GET },
-        { path: '/v1/product', method: RequestMethod.GET },
+        { path: '/v1/products', method: RequestMethod.GET },
         { path: '/v1/resource/file/:id', method: RequestMethod.GET },
       )
       .forRoutes(

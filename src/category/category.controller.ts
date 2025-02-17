@@ -6,7 +6,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { categoryPaginateConfig } from 'src/paginate.config';
 import { Category } from './entities/category.entity';
 
-@Controller({ path: 'category', version: '1' })
+@Controller({ path: 'categories', version: '1' })
 @ApiBearerAuth('access-token')
 @ApiTags('Category')
 export class CategoryController {

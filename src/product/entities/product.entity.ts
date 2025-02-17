@@ -22,6 +22,9 @@ export class Product extends BaseEntity {
   @ApiProperty()
   description: string;
 
+  @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
+  price: number;
+
   @ManyToOne(() => Category, (category) => category.id, { cascade: true })
   @JoinColumn()
   @ApiProperty()

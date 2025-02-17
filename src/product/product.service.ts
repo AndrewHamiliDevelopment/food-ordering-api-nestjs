@@ -8,6 +8,7 @@ import { ProductCreateDto } from './dto/product-create.dto';
 import { Resource } from 'src/resource/entities/resource.entity';
 import { Category } from 'src/category/entities/category.entity';
 import { each } from 'lodash';
+import { ProductUpdateDto } from './dto/product-update.dto';
 
 @Injectable()
 export class ProductService {
@@ -26,7 +27,7 @@ export class ProductService {
   };
   create = async (dto: ProductCreateDto) => {
     this.logger.log('dto', dto);
-    const { thumbnailId, categoryId, imageIds, name, description } = dto;
+    const { thumbnailId, categoryId, imageIds, name, description, price } = dto;
     const thumbnail = await this.resourceRepository.findOne({
       where: { id: thumbnailId },
     });
@@ -47,6 +48,48 @@ export class ProductService {
       category,
       thumbnail,
       images,
+      price,
     });
+  };
+
+  update = async (props: { id: number; dto: ProductUpdateDto }) => {
+    const { id, dto } = props;
+    const {
+      name,
+      description,
+      price,
+      categoryId,
+      thumbnailId,
+      enabled,
+      imageIds,
+    } = dto;
+    const product = await this.repository.findOne({ where: { id } });
+    if (product !== null) {
+      const category = await this.categoryRepository.findOne({
+        where: { id: categoryId },
+      });
+      const thumbnail = await this.resourceRepository.findOne({
+        where: { id: thumbnailId },
+      });
+      const uniqueImageIds = [...new Set(imageIds)];
+      const images: Resource[] = [];
+      await each(uniqueImageIds, async (id) => {
+        const resource = await this.resourceRepository.findOne({
+          where: { id },
+        });
+        if (resource !== null) {
+          images.push(resource);
+        }
+      });
+      return await this.repository.save({
+        ...product,
+        name,
+        description,
+        price,
+        category,
+        thumbnail,
+        enabled,
+      });
+    }
   };
 }
