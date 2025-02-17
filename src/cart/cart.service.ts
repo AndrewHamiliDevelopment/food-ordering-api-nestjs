@@ -19,6 +19,19 @@ export class CartService {
     const { id: userId } = user;
     return await this.getOrCreate(userId);
   };
+
+  checkout = async (req: ExtendedRequest) => {
+    const { user: u } = req;
+    const user = <User>u;
+    const { id: userId } = user;
+    const cart = await this.getOrCreate(userId);
+    await this.repository.save({
+      ...cart,
+      isCheckedOut: true,
+      dateCheckedOut: new Date(),
+    });
+  };
+
   private getOrCreate = async (userId: number) => {
     this.logger.log(`User ID: `, { userId });
     let cart = await this.repository.findOne({

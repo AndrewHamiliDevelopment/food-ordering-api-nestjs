@@ -18,6 +18,7 @@ import { CategoryController } from './category/category.controller';
 import { ProductModule } from './product/product.module';
 import { ProductController } from './product/product.controller';
 import { CartModule } from './cart/cart.module';
+import { PaymentMethodModule } from './payment-method/payment-method.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CartModule } from './cart/cart.module';
     ResourceModule,
     ProductModule,
     CartModule,
+    PaymentMethodModule,
   ],
   controllers: [AppController],
   providers: [AppService],
