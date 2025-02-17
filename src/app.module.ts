@@ -15,6 +15,8 @@ import { ResourceModule } from './resource/resource.module';
 import { UsersController } from './users/users.controller';
 import { ResourceController } from './resource/resource.controller';
 import { CategoryController } from './category/category.controller';
+import { ProductModule } from './product/product.module';
+import { ProductController } from './product/product.controller';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { CategoryController } from './category/category.controller';
     DatabaseModule,
     CategoryModule,
     ResourceModule,
+    ProductModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -31,6 +34,16 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(FirebaseMiddleware)
-      .forRoutes(UsersController, ResourceController, CategoryController);
+      .exclude(
+        { path: '/v1/resource/file/:id', method: RequestMethod.GET },
+        { path: '/v1/category', method: RequestMethod.GET },
+        { path: '/v1/product', method: RequestMethod.GET },
+      )
+      .forRoutes(
+        UsersController,
+        ResourceController,
+        CategoryController,
+        ProductController,
+      );
   }
 }

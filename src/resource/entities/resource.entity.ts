@@ -17,11 +17,14 @@ export class Resource extends BaseEntity {
 
   @AfterLoad()
   generateURL() {
-    console.log('==========');
+    console.log(`========== Generate Resource URLS ID: ${this.id} ===========`);
     this.urls = {
       info: `${process.env.APP_BASE_URL}/v1/resource/${this.id}`,
       file: `${process.env.APP_BASE_URL}/v1/resource/file/${this.id}`,
     };
+    console.log(
+      `========== DONE Generate Resource URLS ID: ${this.id} ===========`,
+    );
   }
 
   constructor(resource: Partial<Resource>) {
