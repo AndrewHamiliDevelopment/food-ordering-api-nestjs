@@ -34,5 +34,5 @@ export const paymentMethodPaginateConfig: PaginateConfig<PaymentMethod> = {
   defaultLimit: 10,
   defaultSortBy: [['dateEntry', 'DESC']],
   sortableColumns: ['dateEntry'],
-  filterableColumns: [['enabled', FilterOperator.EQ]],
-}
+  filterableColumns: { enabled: [FilterOperator.EQ] },
+};
