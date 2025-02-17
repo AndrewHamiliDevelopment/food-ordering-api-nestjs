@@ -19,6 +19,8 @@ import { ProductModule } from './product/product.module';
 import { ProductController } from './product/product.controller';
 import { CartModule } from './cart/cart.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
+import { CartController } from './cart/cart.controller';
+import { PaymentMethodController } from './payment-method/payment-method.controller';
 
 @Module({
   imports: [
@@ -39,15 +41,18 @@ export class AppModule implements NestModule {
     consumer
       .apply(FirebaseMiddleware)
       .exclude(
-        { path: '/v1/resource/file/:id', method: RequestMethod.GET },
         { path: '/v1/category', method: RequestMethod.GET },
+        { path: '/v1/payment-method', method: RequestMethod.GET },
         { path: '/v1/product', method: RequestMethod.GET },
+        { path: '/v1/resource/file/:id', method: RequestMethod.GET },
       )
       .forRoutes(
         UsersController,
         ResourceController,
         CategoryController,
         ProductController,
+        CartController,
+        PaymentMethodController,
       );
   }
 }
