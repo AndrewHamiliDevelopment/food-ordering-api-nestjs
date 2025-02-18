@@ -193,7 +193,9 @@ export const firebaseGetAppClaims = async (props: {
 };
 
 export const isSuperUser = (props: { role: Role }) => {
+  console.log('===== Check if SUPERUSER =====');
   const { role } = props;
   const superRole = [Role.SUPERADMIN, Role.ADMIN];
+  console.log({ role, superRole });
   return superRole.includes(role);
 };
