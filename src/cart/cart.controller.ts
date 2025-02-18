@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Post, Put, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Request,
+} from '@nestjs/common';
 import { CartService } from './cart.service';
 import { ExtendedRequest } from 'src/shared';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -20,12 +29,10 @@ export class CartController {
   addToCart(@Request() req: ExtendedRequest, @Body() dto: CartAddProductDto) {
     return this.cartService.addToCart({ req, dto });
   }
-  @Delete()
+  @Delete(':id')
   @ApiResponse({ type: Cart })
-  deleteFromCart(
-    @Request() req: ExtendedRequest,
-    @Body() dto: CartAddProductDto,
-  ) {
+  deleteFromCart(@Param('id') id: number, @Request() req: ExtendedRequest) {
+    const dto: CartAddProductDto = { productId: id };
     return this.cartService.removeToCart({ req, dto });
   }
 }
