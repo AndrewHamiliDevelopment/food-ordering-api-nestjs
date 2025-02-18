@@ -3,6 +3,7 @@ import {
   Logger,
   NotFoundException,
   StreamableFile,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Resource } from './entities/resource.entity';
@@ -13,6 +14,8 @@ import { ConfigService } from '@nestjs/config';
 import { join, sep, resolve } from 'path';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as fs from 'fs/promises';
+import { ExtendedRequest, isSuperUser } from 'src/shared';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class ResourceService {
@@ -33,11 +36,26 @@ export class ResourceService {
     return paginate(query, this.repository, resourcePaginateConfig);
   };
 
-  create = async (file: Express.Multer.File) => {
-    const { filename: fn, mimetype } = file;
-    this.logger.log('upload file', { fn, mimetype });
-    const filename = `${fn}`;
-    return await this.repository.save({ filename, mimetype });
+  create = async (req: ExtendedRequest, file: Express.Multer.File) => {
+    let proceed = false;
+    if (req.isBypass) {
+      proceed = true;
+    } else {
+      const role = req.role;
+      const superUser = isSuperUser({ role });
+      if (superUser) {
+        proceed = true;
+      }
+    }
+    if (proceed) {
+      const { filename: fn, mimetype } = file;
+      this.logger.log('upload file', { fn, mimetype });
+      const filename = `${fn}`;
+      return await this.repository.save({ filename, mimetype });
+    }
+    throw new UnauthorizedException(
+      'Your account is not allowed to use this module',
+    );
   };
 
   findOne = async (id: number) => {

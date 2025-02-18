@@ -9,6 +9,7 @@ import {
   Logger,
   UploadedFile,
   UseInterceptors,
+  Request,
 } from '@nestjs/common';
 import { ResourceService } from './resource.service';
 import {
@@ -27,6 +28,7 @@ import {
 } from '@nestjs/swagger';
 import { resourcePaginateConfig } from 'src/paginate.config';
 import { Resource } from './entities/resource.entity';
+import { ExtendedRequest } from 'src/shared';
 
 @Controller({ path: 'resource', version: '1' })
 @ApiBearerAuth('access-token')
@@ -59,8 +61,11 @@ export class ResourceController {
     },
   })
   @ApiOperation({ summary: 'Upload resource file' })
-  create(@UploadedFile('file') file: Express.Multer.File) {
-    return this.resourceService.create(file);
+  create(
+    @Request() req: ExtendedRequest,
+    @UploadedFile('file') file: Express.Multer.File,
+  ) {
+    return this.resourceService.create(req, file);
   }
   @Get('file/:id')
   getFile(@Param('id') id: number) {
