@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { Category } from './entities/category.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
@@ -6,6 +6,8 @@ import { categoryPaginateConfig } from 'src/paginate.config';
 import { CategoryAddDto } from './dto/category-add.dto';
 import { Resource } from 'src/resource/entities/resource.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ExtendedRequest, isSuperUser } from 'src/shared';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class CategoryService {
@@ -22,19 +24,40 @@ export class CategoryService {
     return paginate(query, this.repository, categoryPaginateConfig);
   };
 
-  create = async (dto: CategoryAddDto) => {
+  create = async (req: ExtendedRequest, dto: CategoryAddDto) => {
     this.logger.log('🚀 ~ CategoryService ~ create= ~ dto:', dto);
-    const { name, description, thumbnailId, categoryId } = dto;
-    let parent = null;
-    if (categoryId && categoryId !== null && categoryId > 0) {
-      parent = await this.repository.findOne({ where: { id: categoryId } });
-      this.logger.log('🚀 ~ CategoryService ~ create= ~ parent:', parent);
+    let proceed = false;
+    if (req.isBypass) {
+      proceed = true;
+    } else {
+      const role = req.role;
+      const superUser = isSuperUser({ role });
+      if (superUser) {
+        proceed = true;
+      }
     }
-    const thumbnail = await this.resourceRepository.findOne({
-      where: { id: thumbnailId },
-    });
-    this.logger.log('🚀 ~ CategoryService ~ create= ~ thumbnail:', thumbnail);
-    return await this.repository.save({ name, description, thumbnail, parent });
+    if (proceed) {
+      const { name, description, thumbnailId, categoryId } = dto;
+      let parent = null;
+      if (categoryId && categoryId !== null && categoryId > 0) {
+        parent = await this.repository.findOne({ where: { id: categoryId } });
+        this.logger.log('🚀 ~ CategoryService ~ create= ~ parent:', parent);
+      }
+      const thumbnail = await this.resourceRepository.findOne({
+        where: { id: thumbnailId },
+      });
+      this.logger.log('🚀 ~ CategoryService ~ create= ~ thumbnail:', thumbnail);
+      return await this.repository.save({
+        name,
+        description,
+        thumbnail,
+        parent,
+      });
+    } else {
+      throw new UnauthorizedException(
+        'Your account is not allowed to use this module',
+      );
+    }
   };
   listTree = async () => {
     return await this.entityManager

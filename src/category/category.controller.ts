@@ -1,10 +1,16 @@
-import { Body, Controller, Get, Logger, Post } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Request } from '@nestjs/common';
 import { CategoryService } from './category.service';
-import { ApiOkPaginatedResponse, ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
+import {
+  ApiOkPaginatedResponse,
+  ApiPaginationQuery,
+  Paginate,
+  PaginateQuery,
+} from 'nestjs-paginate';
 import { CategoryAddDto } from './dto/category-add.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { categoryPaginateConfig } from 'src/paginate.config';
 import { Category } from './entities/category.entity';
+import { ExtendedRequest } from 'src/shared';
 
 @Controller({ path: 'categories', version: '1' })
 @ApiBearerAuth('access-token')
@@ -25,8 +31,8 @@ export class CategoryController {
     return this.categoryService.listTree();
   }
   @Post()
-  create(@Body() dto: CategoryAddDto) {
+  create(@Request() req: ExtendedRequest, @Body() dto: CategoryAddDto) {
     this.logger.log('Create', dto);
-    return this.categoryService.create(dto);
+    return this.categoryService.create(req, dto);
   }
 }
