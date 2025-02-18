@@ -70,9 +70,11 @@ export class FirebaseMiddleware implements NestMiddleware {
     try {
       if (typeof token !== 'undefined') {
         token = token.replace('Bearer ', '');
+        req.isBypass = false;
         if (token === this.internalToken) {
           this.logger.log('===== USES INTERNAL TOKEN =====');
           req.role = Role.SUPERADMIN;
+          req.isBypass = true;
         } else {
           const decodedToken = await firebaseVerifyIdToken({ idToken: token });
           const userRecord = await firebaseUserGetByUid({

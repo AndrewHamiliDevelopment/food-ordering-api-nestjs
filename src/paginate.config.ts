@@ -9,6 +9,7 @@ export const userPaginateConfig: PaginateConfig<User> = {
   defaultLimit: 10,
   defaultSortBy: [['dateEntry', 'DESC']],
   sortableColumns: ['dateEntry'],
+  relations: ['userDetail'],
 };
 
 export const categoryPaginateConfig: PaginateConfig<Category> = {

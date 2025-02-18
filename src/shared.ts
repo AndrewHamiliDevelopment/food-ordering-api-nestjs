@@ -4,6 +4,7 @@ import { Request } from 'express';
 import { User } from './users/entities/user.entity';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import { has } from 'lodash';
+import { InternalServerErrorException } from '@nestjs/common';
 
 export enum Role {
   SUPERADMIN = 'SUPERADMIN',
@@ -31,7 +32,11 @@ export class ClaimError {
   message: string;
 }
 
-export type ExtendedRequest = Request & { user: User; role: Role };
+export type ExtendedRequest = Request & {
+  user: User;
+  role: Role;
+  isBypass: boolean;
+};
 
 export type ExtendedUserRecord = UserRecord & { shouldCreateClaims?: boolean };
 
@@ -84,6 +89,7 @@ export const firebaseSetCustomUserClaims = async (props: {
           currentClaims.root[appClaimIndex].roles[envClaimIndex].role = role;
         }
       }
+      firebase.auth().setCustomUserClaims(uid, currentClaims);
     } else {
       const claimsRole: ClaimsRole = { env, role };
       const claimsAppRoot: ClaimsAppRoot = { app, roles: [claimsRole] };
@@ -157,11 +163,15 @@ export const firebaseGetAppClaims = async (props: {
   env: string;
   userRecord: UserRecord;
 }): Promise<Role> => {
+  console.info('==========     CLAIMS     ==========');
   console.info('props', props);
   const { app, userRecord: user, env } = props;
   const claims = <ClaimsRoot>user.customClaims;
+  console.log('🚀 ~ claims:', JSON.stringify(claims));
   const errorModel: ErrorModel[] = [];
   if (!claims) {
+    errorModel.push({ message: 'User has no claims' });
+    return Promise.reject(errorModel);
   } else {
     const appClaimsIndex = claims.root.findIndex((cr) => cr.app === app);
     if (appClaimsIndex >= 0) {

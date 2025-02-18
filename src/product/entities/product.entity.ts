@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { resolve } from 'path';
 import { BaseEntity } from 'src/Base.entity';
 import { Category } from 'src/category/entities/category.entity';
 import { Resource } from 'src/resource/entities/resource.entity';
