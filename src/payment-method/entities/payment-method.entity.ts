@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from 'src/Base.entity';
-import { Column } from 'typeorm';
-
+import { Column, Entity } from 'typeorm';
+@Entity()
 export class PaymentMethod extends BaseEntity {
   @Column({ nullable: false })
   @ApiProperty()

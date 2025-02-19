@@ -26,7 +26,7 @@ export interface DatabaseConfigInterface {
 // DATABASE_PASSWORD=f1n@nc3
 
 export const getDatabaseConfig = (): DatabaseConfigInterface => {
-    console.log(process.env.DATABASE_USERNAME);
+  console.log(process.env.DATABASE_USERNAME);
   return {
     type: 'mysql',
     database: process.env.DATABASE_NAME,
