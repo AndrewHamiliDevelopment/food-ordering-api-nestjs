@@ -92,8 +92,13 @@ export const firebaseSetCustomUserClaims = async (props: {
       firebase.auth().setCustomUserClaims(uid, currentClaims);
     } else {
       const claimsRole: ClaimsRole = { env, role };
-      const claimsAppRoot: ClaimsAppRoot = { app, roles: [claimsRole] };
-      const claimsRoot: ClaimsRoot = { root: [claimsAppRoot] };
+      const claimsAppRoot: ClaimsAppRoot = {
+        app,
+        roles: [claimsRole],
+      };
+      const claimsRoot: ClaimsRoot = {
+        root: [...currentClaims.root, claimsAppRoot],
+      };
       firebase.auth().setCustomUserClaims(uid, claimsRoot);
     }
   } else {
