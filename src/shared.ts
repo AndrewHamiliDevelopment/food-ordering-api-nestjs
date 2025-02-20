@@ -204,3 +204,10 @@ export const isSuperUser = (props: { role: Role }) => {
   console.log({ role, superRole });
   return superRole.includes(role);
 };
+
+export interface Mail {
+  to: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}

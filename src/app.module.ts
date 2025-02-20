@@ -21,9 +21,12 @@ import { CartModule } from './cart/cart.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
 import { CartController } from './cart/cart.controller';
 import { PaymentMethodController } from './payment-method/payment-method.controller';
+import { SmtpmailerModule } from './smtpmailer/smtpmailer.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     UsersModule,
     DatabaseModule,
@@ -32,6 +35,7 @@ import { PaymentMethodController } from './payment-method/payment-method.control
     ProductModule,
     CartModule,
     PaymentMethodModule,
+    SmtpmailerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
