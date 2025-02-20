@@ -21,6 +21,7 @@ export class CartController {
   constructor(private readonly cartService: CartService) {}
 
   @Get()
+  @ApiResponse({ type: Cart })
   getCart(@Request() req: ExtendedRequest) {
     return this.cartService.get(req);
   }

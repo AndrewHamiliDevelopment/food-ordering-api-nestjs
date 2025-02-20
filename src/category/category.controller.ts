@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Logger, Post, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Patch,
+  Post,
+  Request,
+} from '@nestjs/common';
 import { CategoryService } from './category.service';
 import {
   ApiOkPaginatedResponse,
@@ -11,6 +20,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { categoryPaginateConfig } from 'src/paginate.config';
 import { Category } from './entities/category.entity';
 import { ExtendedRequest } from 'src/shared';
+import { CategoryUpdateDto } from './dto/category-update.dto';
 
 @Controller({ path: 'categories', version: '1' })
 @ApiBearerAuth('access-token')
@@ -34,5 +44,13 @@ export class CategoryController {
   create(@Request() req: ExtendedRequest, @Body() dto: CategoryAddDto) {
     this.logger.log('Create', dto);
     return this.categoryService.create(req, dto);
+  }
+  @Patch(':id')
+  update(
+    @Param('id') id: number,
+    @Request() req: ExtendedRequest,
+    @Body() dto: CategoryUpdateDto,
+  ) {
+    return this.categoryService.update(req, { id, dto });
   }
 }

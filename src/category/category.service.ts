@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Category } from './entities/category.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
@@ -8,6 +13,7 @@ import { Resource } from 'src/resource/entities/resource.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExtendedRequest, isSuperUser } from 'src/shared';
 import { User } from 'src/users/entities/user.entity';
+import { CategoryUpdateDto } from './dto/category-update.dto';
 
 @Injectable()
 export class CategoryService {
@@ -58,6 +64,46 @@ export class CategoryService {
         'Your account is not allowed to use this module',
       );
     }
+  };
+  update = async (
+    req: ExtendedRequest,
+    props: { dto: CategoryUpdateDto; id: number },
+  ) => {
+    let proceed = false;
+    if (req.isBypass) {
+      proceed = true;
+    } else {
+      const role = req.role;
+      const superUser = isSuperUser({ role });
+      if (superUser) {
+        proceed = true;
+      }
+    }
+    const { dto, id } = props;
+    const { name, description, categoryId, thumbnailId, enabled } = dto;
+    if (proceed) {
+      const category = await this.repository.findOne({ where: { id } });
+      if (category !== null) {
+        const thumbnail = await this.resourceRepository.findOne({
+          where: { id: thumbnailId },
+        });
+        const parent = await this.repository.findOne({
+          where: { id: categoryId },
+        });
+        return await this.repository.save({
+          ...category,
+          parent,
+          thumbnail,
+          name,
+          description,
+          enabled,
+        });
+      }
+      throw new NotFoundException(`Category ID ${id} not found`);
+    }
+    throw new UnauthorizedException(
+      'Your account is not allowed to use this module',
+    );
   };
   listTree = async () => {
     return await this.entityManager
