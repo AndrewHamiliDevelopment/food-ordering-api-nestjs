@@ -9,11 +9,13 @@ import {
   Request,
 } from '@nestjs/common';
 import { PaymentMethodService } from './payment-method.service';
-import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import { ApiOkPaginatedResponse, ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
 import { ExtendedRequest } from 'src/shared';
 import { PaymentMethodAddDto } from './dto/PaymentMethodAdd.dto';
 import { PaymentMethodUpdateDto } from './dto/PaymentMethodUpdate.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { PaymentMethod } from './entities/payment-method.entity';
+import { paymentMethodPaginateConfig } from 'src/paginate.config';
 
 @Controller({ path: 'payment-method', version: '1' })
 @ApiBearerAuth('access-token')
@@ -23,6 +25,8 @@ export class PaymentMethodController {
   constructor(private readonly paymentMethodService: PaymentMethodService) {}
 
   @Get()
+  @ApiOkPaginatedResponse(PaymentMethod, paymentMethodPaginateConfig)
+  @ApiPaginationQuery(paymentMethodPaginateConfig)
   list(@Paginate() query: PaginateQuery) {
     this.logger.log('Query', query);
     return this.paymentMethodService.list(query);
@@ -31,7 +35,7 @@ export class PaymentMethodController {
   create(@Request() req: ExtendedRequest, @Body() dto: PaymentMethodAddDto) {
     return this.paymentMethodService.create(req, dto);
   }
-  @Patch('id')
+  @Patch(':id')
   update(
     @Param('id') id: number,
     @Request() req: ExtendedRequest,

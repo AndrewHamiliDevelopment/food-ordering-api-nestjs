@@ -1,5 +1,4 @@
 import { BaseEntity } from 'src/Base.entity';
-import { Address } from 'src/users/entities/address.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
   Column,
@@ -20,18 +19,19 @@ export class Cart extends BaseEntity {
   @Generated('uuid')
   @ApiProperty()
   uuid: string;
-  @ManyToOne(() => Address, (address) => address.id)
-  @ApiProperty()
-  address: Address;
+
   @ManyToOne(() => User, (user) => user.id)
   @ApiProperty()
   user: User;
+
   @Column({ default: false })
   @ApiProperty()
   isCheckedOut: boolean;
+
   @CreateDateColumn({ nullable: true })
   @ApiProperty()
   dateCheckedOut: Date;
+
   @DeleteDateColumn()
   @ApiProperty()
   dateDeleted: Date;

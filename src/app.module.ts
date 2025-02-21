@@ -23,6 +23,7 @@ import { CartController } from './cart/cart.controller';
 import { PaymentMethodController } from './payment-method/payment-method.controller';
 import { SmtpmailerModule } from './smtpmailer/smtpmailer.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     CartModule,
     PaymentMethodModule,
     SmtpmailerModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

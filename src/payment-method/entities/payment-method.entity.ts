@@ -15,7 +15,7 @@ export class PaymentMethod extends BaseEntity {
   @ApiProperty()
   additionalNotes: string;
 
-  @Column()
+  @Column({ default: true })
   @ApiProperty()
   enabled: boolean;
 

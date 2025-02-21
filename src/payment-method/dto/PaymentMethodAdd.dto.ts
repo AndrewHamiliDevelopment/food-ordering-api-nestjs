@@ -16,9 +16,4 @@ export class PaymentMethodAddDto {
   @IsNotEmpty()
   @ApiProperty()
   additionalNotes: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  @ApiProperty()
-  paymentMethodId: number;
 }

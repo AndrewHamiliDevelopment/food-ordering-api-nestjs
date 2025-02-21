@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentMethod } from './entities/payment-method.entity';
 import { Repository } from 'typeorm';
@@ -61,6 +65,11 @@ export class PaymentMethodService {
     if (proceed) {
       const { name, description, additionalNotes, enabled } = dto;
       const paymentMethod = await this.repository.findOne({ where: { id } });
+      if (paymentMethod === null) {
+        throw new NotFoundException(
+          'Selected payment method not found. Cannot proceed update',
+        );
+      }
       return await this.repository.save({
         ...paymentMethod,
         name,
