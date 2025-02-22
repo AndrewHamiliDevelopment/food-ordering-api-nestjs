@@ -21,9 +21,6 @@ export class Order extends BaseEntity {
   @Column({ type: 'enum', enum: STATUS, default: STATUS.PENDING })
   status: STATUS;
 
-  lastName: string;
-  firstName: string;
-
   @ManyToOne(() => Address, (address) => address.id)
   @ApiProperty()
   address: Address;

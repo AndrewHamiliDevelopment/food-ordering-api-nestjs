@@ -34,6 +34,10 @@ export class Address extends BaseEntity {
   @ApiProperty()
   recipientName: string;
 
+  @Column()
+  @ApiProperty()
+  contactNumber: string;
+
   constructor(address: Partial<Address>) {
     super();
     Object.assign(this, address);

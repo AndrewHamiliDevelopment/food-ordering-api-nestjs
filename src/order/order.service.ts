@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Order } from './entities/order.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
@@ -7,7 +12,7 @@ import { Repository } from 'typeorm';
 import { OrderCreateDto } from './dto/Order-create.dto';
 import { Cart } from 'src/cart/entities/cart.entity';
 import { Address } from 'src/users/entities/address.entity';
-import { ExtendedRequest } from 'src/shared';
+import { ExtendedRequest, isSuperUser } from 'src/shared';
 import { User } from 'src/users/entities/user.entity';
 import { OrderUpdateDto } from './dto/Order-update.dto';
 
@@ -61,7 +66,28 @@ export class OrderService {
     });
   };
 
-  update = async (req: ExtendedRequest, dto: OrderUpdateDto) => {
-    throw new BadRequestException('Not implemented');
+  update = async (
+    req: ExtendedRequest,
+    props: { dto: OrderUpdateDto; id: number },
+  ) => {
+    let proceed: boolean = false;
+    if (req.isBypass) {
+      proceed = true;
+    } else {
+      const { role } = req;
+      if (isSuperUser({ role })) {
+        proceed = true;
+      }
+    }
+    if (proceed) {
+      const { dto, id } = props;
+      const order = this.repository.findOne({ where: { id } });
+      if (order !== null) {
+        const { status } = dto;
+        await this.repository.save({ ...order, status });
+      } else {
+        throw new NotFoundException(`Order ID: ${id} not found`);
+      }
+    }
   };
 }

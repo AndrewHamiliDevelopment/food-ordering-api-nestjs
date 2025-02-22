@@ -21,6 +21,6 @@ export class OrderController {
 
   @Patch()
   update(@Request() req: ExtendedRequest, @Body() dto: OrderUpdateDto) {
-    return this.orderService.
+    return this.orderService.update(req, dto);
   }
 }
