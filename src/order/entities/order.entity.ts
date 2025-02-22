@@ -26,7 +26,8 @@ export class Order extends BaseEntity {
   address: Address;
 
   @ManyToOne(() => PaymentMethod, (paymentMethod) => paymentMethod.id)
-  paymentMethodId: PaymentMethod;
+  @JoinColumn()
+  paymentMethod: PaymentMethod;
 
   constructor(order: Partial<Order>) {
     super();
