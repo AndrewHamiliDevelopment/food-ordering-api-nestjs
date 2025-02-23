@@ -10,14 +10,18 @@ import {
 import { OrderService } from './order.service';
 import { OrderCreateDto } from './dto/Order-create.dto';
 import { ExtendedRequest } from 'src/shared';
-import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import { ApiOkPaginatedResponse, ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
 import { OrderUpdateDto } from './dto/Order-update.dto';
+import { orderPaginateConfig } from 'src/paginate.config';
+import { Order } from './entities/order.entity';
 
 @Controller('order')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Get()
+  @ApiPaginationQuery(orderPaginateConfig)
+  @ApiOkPaginatedResponse(Order, orderPaginateConfig)
   list(@Request() req: ExtendedRequest, @Paginate() query: PaginateQuery) {
     return this.orderService.list(req, query);
   }

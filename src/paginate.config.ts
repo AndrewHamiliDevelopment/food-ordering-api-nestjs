@@ -5,6 +5,7 @@ import { Resource } from './resource/entities/resource.entity';
 import { Product } from './product/entities/product.entity';
 import { PaymentMethod } from './payment-method/entities/payment-method.entity';
 import { Order } from './order/entities/order.entity';
+import { ILike } from 'typeorm';
 
 export const userPaginateConfig: PaginateConfig<User> = {
   defaultLimit: 10,
@@ -43,4 +44,5 @@ export const orderPaginateConfig: PaginateConfig<Order> = {
   defaultLimit: 10,
   defaultSortBy: [['dateEntry', 'DESC']],
   sortableColumns: ['dateEntry'],
+  filterableColumns: {'cart.cartItems.product.name': [FilterOperator.ILIKE]}
 };
