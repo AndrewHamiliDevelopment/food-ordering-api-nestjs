@@ -4,6 +4,7 @@ import { Category } from 'src/category/entities/category.entity';
 import { Resource } from 'src/resource/entities/resource.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { DecimalColumnTransformer } from 'src/shared';
 
 @Entity()
 export class ProductSnapshot extends BaseEntity {
@@ -20,7 +21,7 @@ export class ProductSnapshot extends BaseEntity {
   @ApiProperty()
   description: string;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
+  @Column({ type: 'decimal', precision: 18, scale: 4, transformer: new DecimalColumnTransformer() })
   @ApiProperty()
   price: number;
 

@@ -79,12 +79,15 @@ export const firebaseSetCustomUserClaims = async (props: {
       (car) => car.app === app,
     );
     if (appClaimIndex >= 0) {
+      console.log(`Claims for app \'${app}\' exists`);
       const envClaimIndex = currentClaims.root[appClaimIndex].roles.findIndex(
         (cr) => cr.env === env,
       );
       if (envClaimIndex >= 0) {
+        console.log(`Claims for env \'${env}\' exists`);
         const envRole =
           currentClaims.root[appClaimIndex].roles[envClaimIndex].role;
+        console.log("🚀 ~ envRole:", envRole)
         if (envRole !== role) {
           currentClaims.root[appClaimIndex].roles[envClaimIndex].role = role;
         }
@@ -210,4 +213,13 @@ export interface Mail {
   subject: string;
   text?: string;
   html?: string;
+}
+
+export class DecimalColumnTransformer {
+  to(data: number): number {
+    return data;
+  }
+  from(data: string): number {
+    return parseFloat(data);
+  }
 }

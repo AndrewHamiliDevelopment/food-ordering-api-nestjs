@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from 'src/Base.entity';
 import { Category } from 'src/category/entities/category.entity';
 import { Resource } from 'src/resource/entities/resource.entity';
+import { DecimalColumnTransformer } from 'src/shared';
 import {
   Column,
   Entity,
@@ -21,12 +22,12 @@ export class Product extends BaseEntity {
   @ApiProperty()
   description: string;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
+  @Column({ type: 'decimal', precision: 18, scale: 4, default: 0, transformer: new DecimalColumnTransformer() })
+  @ApiProperty({type: 'number'})
   price: number;
 
   @ManyToOne(() => Category, (category) => category.id, { cascade: true })
   @JoinColumn()
-  @ApiProperty()
   category: Category;
 
   @ManyToOne(() => Resource, (resource) => resource.id, { cascade: true })
