@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Patch, Post, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Request,
+} from '@nestjs/common';
 import { OrderService } from './order.service';
 import { OrderCreateDto } from './dto/Order-create.dto';
 import { ExtendedRequest } from 'src/shared';
@@ -19,8 +27,12 @@ export class OrderController {
     return this.orderService.create(req, dto);
   }
 
-  @Patch()
-  update(@Request() req: ExtendedRequest, @Body() dto: OrderUpdateDto) {
-    return this.orderService.update(req, dto);
+  @Patch(':id')
+  update(
+    @Param('id') id: number,
+    @Request() req: ExtendedRequest,
+    @Body() dto: OrderUpdateDto,
+  ) {
+    return this.orderService.update(req, { dto, id });
   }
 }
