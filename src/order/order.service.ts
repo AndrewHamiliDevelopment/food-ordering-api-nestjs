@@ -49,7 +49,7 @@ export class OrderService {
       throw new BadRequestException('Cart is invalid. Please try again later');
     }
     const address = await this.addressRepository.findOne({
-      where: { id: addressId, user },
+      where: { id: addressId, userDetail: user.userDetail },
     });
     if (address === null) {
       throw new BadRequestException(

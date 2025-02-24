@@ -2,13 +2,14 @@ import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from 'src/Base.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from './user.entity';
+import { UserDetail } from './user-detail.entity';
 
 @Entity()
 export class Address extends BaseEntity {
 
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => UserDetail, (userDetail) => userDetail.address, {cascade: true})
   @JoinColumn()
-  user: User;
+  userDetail: UserDetail;
 
   @Column()
   @ApiProperty()

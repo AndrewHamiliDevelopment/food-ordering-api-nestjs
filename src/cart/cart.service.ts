@@ -84,6 +84,7 @@ export class CartService {
     dto: CartAddProductDto;
     req: ExtendedRequest;
   }) => {
+    
     const { req, dto } = props;
     const { productId } = dto;
     const { user: u } = req;
@@ -93,6 +94,9 @@ export class CartService {
       where: { id: productId, enabled: true },
       relations: ['category', 'thumbnail', 'images'],
     });
+    if(product === null) {
+      throw new BadRequestException('Product not found or is already disabled. Please try again')
+    }
     const cartItem = await this.cartItemRepository.findOne({
       where: {
         cart: { id: cart.id },
@@ -128,7 +132,8 @@ export class CartService {
     this.logger.log(`User ID: `, { userId });
     let cart = await this.repository.findOne({
       where: { user: { id: userId }, isCheckedOut: false },
-      relations: ['cartItems', 'cartItems.product'],
+      relations: ['user', 'user.userDetail', 'cartItems', 'cartItems.product', 'cartItems.product', 'cartItems.product.product'],
+      order: {cartItems: {quantity: 'DESC'}}
     });
     if (cart === null) {
       this.logger.log('No cart exists for user. Create a new cart');
@@ -136,12 +141,13 @@ export class CartService {
       cart = await this.repository.save({ user, dateCheckedOut: null });
       cart = await this.repository.findOne({
         where: { user: { id: userId }, isCheckedOut: false },
-        relations: ['cartItems'],
+        relations: ['user', 'user.userDetail', 'cartItems', 'cartItems.product', 'cartItems.product', 'cartItems.product.product'],
+        order: {cartItems: {quantity: 'DESC'}}
       });
-      this.logger.log('Cart', cart);
+      this.logger.log('New Cart', cart);
       return cart;
     }
-    this.logger.log('Cart', cart);
+    this.logger.log('Existing Cart', cart);
     return cart;
   };
 }

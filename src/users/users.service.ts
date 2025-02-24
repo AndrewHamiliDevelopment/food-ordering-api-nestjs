@@ -39,73 +39,76 @@ export class UsersService {
   }
 
   list = async (req: ExtendedRequest, query: PaginateQuery) => {
-    const role = req.role;
-    if (isSuperUser({ role })) {
-      return paginate(query, this.repository, userPaginateConfig);
+    let proceed = false;
+    if(req.isBypass)  {
+      proceed = true;
+    } else if(isSuperUser({ role: req.role })) {
+      proceed = true;
     }
-    throw new UnauthorizedException(
-      'Your account is not allowed to use this module',
-    );
+    if(proceed) {
+      return paginate(query, this.repository, userPaginateConfig);
+    } else {
+      throw new UnauthorizedException('Your account is not authorized to use this module');
+    }
   };
 
   me = (req: ExtendedRequest) => {
+    if(req.isBypass) {
+      throw new BadRequestException('You are using a BYPASS account, nothing to do here');
+    }
     const { user: u } = req;
     const user = <User>u;
     return user;
   };
 
-  getOne = async (props: { id: number }): Promise<User> => {
-    const { id } = props;
+  getOne = async (req: ExtendedRequest, props: { id: number }): Promise<User> => {
+    let proceed = false;
+    const role = req.role;
+    if(req.isBypass) {
+      proceed = true;
+    } else if (isSuperUser({role})) {
+      proceed = true;
+    }
+    if(proceed) {
+      const { id } = props;
     const user = await this.repository.findOne({ where: { id } });
     if (user === null) {
       throw new NotFoundException(`User with ID: ${id} not foud`);
     }
     return user;
+    }else {
+      throw new UnauthorizedException('Your account is not authorized to use this module');
+    }
   };
   create = async (props: { req: ExtendedRequest; dto: UserCreateDto }) => {
     const { dto, req } = props;
-    const userRole = req.role;
-    if (isSuperUser({ role: userRole })) {
-      const { email, emailVerified, notifyAccountCreation, role } = dto;
+    const role = req.role;
+    let proceed = false;
+    if(req.isBypass ){
+      proceed = true
+    } else {
+      if(isSuperUser({role})) {
+        proceed = true;
+      }
+    }
+    if (proceed) {
+      const {email, emailVerified, notifyAccountCreation, role} = dto;
       const userRecord = await firebaseGetOrCreateUser({
         email,
         emailVerified,
+        role
       });
-      if (userRecord === null) {
-        throw new BadRequestException(
-          `An error has occurred when creating a new user with email: ${email}`,
-        );
-        if (notifyAccountCreation) {
-          //TODO: integrate SMTP service and send email
-        }
+      if(userRecord === null) {
+        throw new BadRequestException(`An error has occurred while creating a new user for "${email}"`)
       }
-      const { uid, displayName, phoneNumber, photoURL, disabled } = userRecord;
-      const user = await this.repository.save({
-        uid,
-        email,
-        emailVerified,
-        displayName,
-        phoneNumber,
-        photoURL,
-        disabled,
-      });
+      const {uid, displayName, phoneNumber, photoURL, disabled} = userRecord;
+      const user = await this.repository.save({uid, displayName, phoneNumber, photoURL, disabled});
       const { id } = user;
-
-      firebaseSetCustomUserClaims({
-        app: this.app,
-        env: this.env,
-        uid: user.uid,
-        role,
-      });
-
-      return await this.repository.findOne({
-        where: { id },
-        relations: ['userDetail'],
-      });
+      firebaseSetCustomUserClaims({app: this.app, env: this.env, role, uid});
+      return await this.repository.findOne({where: { id }});
+    } else {
+      throw new UnauthorizedException('Your account is not authorized to use this module');
     }
-    throw new UnauthorizedException(
-      'Your account is allowed to use this module',
-    );
   };
   update = async (props: {
     req: ExtendedRequest;
@@ -113,97 +116,34 @@ export class UsersService {
     dto: UserUpdateDto;
   }) => {
     const { userId, dto, req } = props;
-    const { lastName, firstName, middleName, role } = dto;
-    if (req.isBypass) {
-      this.logger.log('===== BYPASS =====');
-      const user = await this.repository.findOne({ where: { id: userId } });
-      if (user === null)
-        throw new BadRequestException(`User with ID: ${userId} not found`);
-      const userDetail = await this.userDatailRepository.findOne({
-        where: { user: { id: userId } },
-      });
-      if (userDetail !== null) {
-        await this.userDatailRepository.save({
-          ...userDetail,
-          lastName,
-          firstName,
-          middleName,
-        });
-        await firebaseSetCustomUserClaims({
-          app: this.app,
-          env: this.env,
-          uid: user.uid,
-          role,
-        });
-      } else {
-        await this.userDatailRepository.save({
-          user,
-          lastName,
-          firstName,
-          middleName,
-        });
-      }
-      return await this.repository.findOne({ where: { id: userId } });
-    } else {
-      const { user: u } = req;
-      const user = <User>u;
-      const superUser = isSuperUser({ role: req.role });
-      this.logger.log('ID', userId);
-      const self = user.id === userId;
-      if (!superUser) {
-        this.logger.log('===== This is not a SUPERUSER =====');
-        if (self) {
-          const userDetail = await this.userDatailRepository.findOne({
-            where: { user: { id: user.id } },
-          });
-          if (userDetail !== null) {
-            this.logger.log('Update UserDetail');
-            await this.userDatailRepository.save({
-              ...userDetail,
-              lastName,
-              firstName,
-              middleName,
-            });
-          } else {
-            this.logger.log('Create UserDetail');
-            await this.userDatailRepository.save({
-              user,
-              lastName,
-              firstName,
-              middleName,
-            });
-          }
-        } else {
-          throw new ForbiddenException(
-            'Your account is not allowed to modify someone\s account.',
-          );
+    const { user: u} = req
+    const user = <User>u;
+    const role = req.role;
+    let proceed = false;
+    if(req.isBypass) {
+      proceed = true;
+    } else if (isSuperUser({role})) {
+      proceed = true;
+    } else if(userId === user.id) {
+      proceed = true;
+    }
+    if(proceed) {
+      const {lastName, firstName, middleName, role} = dto;
+      if(userId === user.id) {
+        if(role !== dto.role) {
+          throw new UnauthorizedException('You are not allowed to change your role');
         }
-        return await this.repository.findOne({
+      }
+      const updateUser = await this.repository.findOne({where: {id: userId}});
+      const updateUserDetail = await this.userDatailRepository.findOne({where: {user: {id: updateUser.id}}});
+      await this.userDatailRepository.save({...updateUserDetail, lastName, firstName, middleName});
+      await firebaseSetCustomUserClaims({app: this.app, env: this.env, uid: updateUser.uid, role})
+      return await this.repository.findOne({
           where: { id: user.id },
-          relations: ['userDetail'],
+          relations: ['userDetail', 'userDetail.address'],
         });
-      } else {
-        this.logger.log('===== This is a SUPERUSER =====');
-        await this.userDatailRepository.save({
-          user,
-          lastName,
-          firstName,
-          middleName,
-        });
-
-        if (!self) {
-          await firebaseSetCustomUserClaims({
-            app: this.app,
-            env: this.env,
-            uid: user.uid,
-            role,
-          });
-        } else {
-          throw new ForbiddenException(
-            'Your account is not allowed to modify your own role',
-          );
-        }
-      }
+    } else {
+      throw new UnauthorizedException('Your account is not allowed to use this module.')
     }
   };
 }

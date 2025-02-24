@@ -21,6 +21,7 @@ export class Cart extends BaseEntity {
   uuid: string;
 
   @ManyToOne(() => User, (user) => user.id)
+  @JoinColumn()
   @ApiProperty()
   user: User;
 
