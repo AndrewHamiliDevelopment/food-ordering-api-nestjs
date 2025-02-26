@@ -44,5 +44,6 @@ export const orderPaginateConfig: PaginateConfig<Order> = {
   defaultLimit: 10,
   defaultSortBy: [['dateEntry', 'DESC']],
   sortableColumns: ['dateEntry'],
-  filterableColumns: {'cart.cartItems.product.name': [FilterOperator.ILIKE]}
+  filterableColumns: {'cart.cartItems.product.name': [FilterOperator.ILIKE]},
+  relations: ['address', 'cart', 'paymentMethod']
 };

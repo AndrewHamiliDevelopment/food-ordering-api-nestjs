@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { ExtendedRequest } from 'src/shared';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CartAddProductDto } from './dto/cart-add-product.dto';
 import { Cart } from './entities/cart.entity';
 
@@ -21,12 +21,13 @@ export class CartController {
   constructor(private readonly cartService: CartService) {}
 
   @Get()
-  @ApiResponse({ type: Cart })
+  @ApiResponse({ type: Cart, description: 'Get existing cart or create a new Cart' })
   getCart(@Request() req: ExtendedRequest) {
     return this.cartService.get(req);
   }
   @Post()
-  @ApiResponse({ type: Cart })
+  @ApiBody({type: CartAddProductDto })
+  @ApiResponse({ type: Cart, description: 'Add product to cart'})
   addToCart(@Request() req: ExtendedRequest, @Body() dto: CartAddProductDto) {
     return this.cartService.addToCart({ req, dto });
   }

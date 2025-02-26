@@ -24,6 +24,8 @@ import { PaymentMethodController } from './payment-method/payment-method.control
 import { SmtpmailerModule } from './smtpmailer/smtpmailer.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { OrderModule } from './order/order.module';
+import { AddressModule } from './address/address.module';
+import { AddressController } from './address/address.controller';
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { OrderModule } from './order/order.module';
     PaymentMethodModule,
     SmtpmailerModule,
     OrderModule,
+    AddressModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -60,6 +63,7 @@ export class AppModule implements NestModule {
         ProductController,
         CartController,
         PaymentMethodController,
+        AddressController
       );
   }
 }

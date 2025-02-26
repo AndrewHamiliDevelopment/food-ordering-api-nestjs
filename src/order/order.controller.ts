@@ -14,8 +14,11 @@ import { ApiOkPaginatedResponse, ApiPaginationQuery, Paginate, PaginateQuery } f
 import { OrderUpdateDto } from './dto/Order-update.dto';
 import { orderPaginateConfig } from 'src/paginate.config';
 import { Order } from './entities/order.entity';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-@Controller('order')
+@Controller({ path: 'orders', version: '1'})
+@ApiBearerAuth('access-token')
+@ApiTags('Orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
@@ -26,12 +29,20 @@ export class OrderController {
     return this.orderService.list(req, query);
   }
 
+  
   @Post()
+  @ApiResponse({type: Order})
   create(@Request() req: ExtendedRequest, @Body() dto: OrderCreateDto) {
     return this.orderService.create(req, dto);
   }
+  
+  @Get(':id')
+  getOne(@Param('id') id: number, @Request() req: ExtendedRequest) {
+    return this.orderService.getOne(req, id);
+  }
 
   @Patch(':id')
+  @ApiResponse({type: Order})
   update(
     @Param('id') id: number,
     @Request() req: ExtendedRequest,

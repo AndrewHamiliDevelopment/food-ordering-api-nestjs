@@ -1,7 +1,8 @@
 import { BaseEntity } from 'src/Base.entity';
-import { Column, Entity, OneToOne } from 'typeorm';
+import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
 import { UserDetail } from './user-detail.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Address } from 'src/address/entities/address.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -40,6 +41,10 @@ export class User extends BaseEntity {
   @OneToOne(() => UserDetail, (userDetail) => userDetail.user)
   @ApiProperty()
   userDetail: UserDetail;
+
+  @OneToMany(() => Address, (address) => address.user)
+  @ApiProperty({isArray: true, type: Address })
+  address: Address[];
 
   constructor(user: Partial<User>) {
     super();

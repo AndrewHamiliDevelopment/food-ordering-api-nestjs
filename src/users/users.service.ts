@@ -22,6 +22,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { UserUpdateDto } from './dto/User-update.dto';
 import { UserDetail } from './entities/user-detail.entity';
+import { Address } from '../address/entities/address.entity';
 
 @Injectable()
 export class UsersService {
@@ -29,7 +30,8 @@ export class UsersService {
   private app = '';
   private env = '';
   constructor(
-    @InjectRepository(User) private readonly repository: Repository<User>,
+    @InjectRepository(User)
+    private readonly repository: Repository<User>,
     @InjectRepository(UserDetail)
     private readonly userDatailRepository: Repository<UserDetail>,
     private readonly configService: ConfigService,
@@ -146,4 +148,5 @@ export class UsersService {
       throw new UnauthorizedException('Your account is not allowed to use this module.')
     }
   };
+
 }

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from 'src/Base.entity';
 import { Cart } from 'src/cart/entities/cart.entity';
 import { PaymentMethod } from 'src/payment-method/entities/payment-method.entity';
-import { Address } from 'src/users/entities/address.entity';
+import { Address } from 'src/address/entities/address.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 
 export enum STATUS {

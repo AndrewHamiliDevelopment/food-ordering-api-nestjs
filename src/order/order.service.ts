@@ -11,7 +11,7 @@ import { orderPaginateConfig } from 'src/paginate.config';
 import { Repository } from 'typeorm';
 import { OrderCreateDto } from './dto/Order-create.dto';
 import { Cart } from 'src/cart/entities/cart.entity';
-import { Address } from 'src/users/entities/address.entity';
+import { Address } from 'src/address/entities/address.entity';
 import { ExtendedRequest, isSuperUser, Role } from 'src/shared';
 import { User } from 'src/users/entities/user.entity';
 import { OrderUpdateDto } from './dto/Order-update.dto';
@@ -34,6 +34,10 @@ export class OrderService {
     return await this.orderList({ query, user, role, isBypass });
   };
 
+  getOne = async (req: ExtendedRequest, id: number) => {
+    return await this.repository.findOne({where: {id }, relations: ['address', 'cart', 'paymentMethod']})
+  }
+
   create = async (req: ExtendedRequest, dto: OrderCreateDto) => {
     if (req.isBypass) {
       throw new BadRequestException('Bypass access. Nothing to do here');
@@ -49,7 +53,7 @@ export class OrderService {
       throw new BadRequestException('Cart is invalid. Please try again later');
     }
     const address = await this.addressRepository.findOne({
-      where: { id: addressId, userDetail: user.userDetail },
+      where: { id: addressId, user: {id: user.id} },
     });
     if (address === null) {
       throw new BadRequestException(
