@@ -16,7 +16,7 @@ import {
   PaginateQuery,
 } from 'nestjs-paginate';
 import { CategoryAddDto } from './dto/category-add.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiDefaultResponse, ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { categoryPaginateConfig } from 'src/paginate.config';
 import { Category } from './entities/category.entity';
 import { ExtendedRequest } from 'src/shared';
@@ -37,15 +37,18 @@ export class CategoryController {
     return this.categoryService.list(query);
   }
   @Get('tree')
+  @ApiOkResponse({ type: Category, isArray: true})
   listTree() {
     return this.categoryService.listTree();
   }
   @Post()
+  @ApiResponse({type: Category})
   create(@Request() req: ExtendedRequest, @Body() dto: CategoryAddDto) {
     this.logger.log('Create', dto);
     return this.categoryService.create(req, dto);
   }
   @Patch(':id')
+  @ApiResponse({type: Category})
   update(
     @Param('id') id: number,
     @Request() req: ExtendedRequest,

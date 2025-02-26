@@ -32,7 +32,7 @@ export class CartController {
     return this.cartService.addToCart({ req, dto });
   }
   @Delete(':id')
-  @ApiResponse({ type: Cart })
+  @ApiResponse({ type: Cart, description: 'Deducts or deletes a product in the cart.' })
   deleteFromCart(@Param('id') id: number, @Request() req: ExtendedRequest) {
     const dto: CartAddProductDto = { productId: id };
     return this.cartService.removeToCart({ req, dto });
