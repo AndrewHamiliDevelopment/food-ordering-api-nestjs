@@ -64,7 +64,7 @@ export class OrderService {
     await this.cartRepository.save({id: cart.id, isCheckedOut: true, dateCheckedOut: new Date()})
     return await this.repository.findOne({
       where: { id: order.id },
-      relations: ['cart', 'cart.user', 'cart.cartItems', 'address'],
+      relations: ['address', 'cart', 'cart.cartItems', 'cart.cartItems.product', 'paymentMethod']
     });
   };
 
