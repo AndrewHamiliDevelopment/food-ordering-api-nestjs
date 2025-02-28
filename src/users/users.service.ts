@@ -131,9 +131,11 @@ export class UsersService {
     }
     if(proceed) {
       const {lastName, firstName, middleName, role} = dto;
-      if(userId === user.id) {
-        if(role !== dto.role) {
-          throw new UnauthorizedException('You are not allowed to change your role');
+      if(!req.isBypass) {
+        if(userId === user.id) {
+          if(role !== dto.role) {
+            throw new UnauthorizedException('You are not allowed to change your role');
+          }
         }
       }
       const updateUser = await this.repository.findOne({where: {id: userId}});
