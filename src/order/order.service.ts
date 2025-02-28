@@ -47,7 +47,7 @@ export class OrderService {
     const { cartId, addressId } = dto;
     this.logger.log('🚀 ~ OrderService ~ cartId:', { cartId });
     const cart = await this.cartRepository.findOne({
-      where: { id: cartId, isCheckedOut: false, dateCheckedOut: null, user },
+      where: { id: cartId, isCheckedOut: false, dateCheckedOut: null, user: {id: user.id} },
     });
     if (cart === null) {
       throw new BadRequestException('Cart is invalid. Please try again later');
