@@ -61,6 +61,7 @@ export class OrderService {
       );
     }
     const order = await this.repository.save({ cart, address });
+    await this.cartRepository.save({id: cart.id, isCheckedOut: true, dateCheckedOut: new Date()})
     return await this.repository.findOne({
       where: { id: order.id },
       relations: ['cart', 'cart.user', 'cart.cartItems', 'address'],
