@@ -140,6 +140,10 @@ export class UsersService {
         }
       }
       const updateUser = await this.repository.findOne({where: {id: userId}});
+      console.log("🚀 ~ UsersService ~ updateUser:", updateUser);
+      if(updateUser === null) {
+        throw new BadRequestException(`User ID: ${userId} not found`)
+      }
       const updateUserDetail = await this.userDatailRepository.findOne({where: {user: {id: updateUser.id}}});
       await this.userDatailRepository.save({...updateUserDetail, lastName, firstName, middleName});
       await firebaseSetCustomUserClaims({app: this.app, env: this.env, uid: updateUser.uid, role})

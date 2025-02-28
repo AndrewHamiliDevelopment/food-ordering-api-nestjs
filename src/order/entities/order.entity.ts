@@ -16,9 +16,11 @@ export enum STATUS {
 export class Order extends BaseEntity {
   @OneToOne(() => Cart, (cart) => cart.id)
   @JoinColumn()
+  @ApiProperty()
   cart: Cart;
 
   @Column({ type: 'enum', enum: STATUS, default: STATUS.PENDING })
+  @ApiProperty({enum: STATUS, default: STATUS.PENDING})
   status: STATUS;
 
   @ManyToOne(() => Address, (address) => address.id)
@@ -27,6 +29,7 @@ export class Order extends BaseEntity {
 
   @ManyToOne(() => PaymentMethod, (paymentMethod) => paymentMethod.id)
   @JoinColumn()
+  @ApiProperty()
   paymentMethod: PaymentMethod;
 
   constructor(order: Partial<Order>) {
