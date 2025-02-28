@@ -118,6 +118,7 @@ export class UsersService {
     dto: UserUpdateDto;
   }) => {
     const { userId, dto, req } = props;
+    console.log("🚀 ~ UsersService ~ props:", props)
     const { user: u} = req
     const user = <User>u;
     const role = req.role;
@@ -143,8 +144,8 @@ export class UsersService {
       await this.userDatailRepository.save({...updateUserDetail, lastName, firstName, middleName});
       await firebaseSetCustomUserClaims({app: this.app, env: this.env, uid: updateUser.uid, role})
       return await this.repository.findOne({
-          where: { id: user.id },
-          relations: ['userDetail', 'userDetail.address'],
+          where: { id: updateUser.id },
+          relations: ['userDetail', 'address'],
         });
     } else {
       throw new UnauthorizedException('Your account is not allowed to use this module.')
