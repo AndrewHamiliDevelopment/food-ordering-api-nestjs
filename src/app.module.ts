@@ -26,6 +26,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { OrderModule } from './order/order.module';
 import { AddressModule } from './address/address.module';
 import { AddressController } from './address/address.controller';
+import { OrderController } from './order/order.controller';
 
 @Module({
   imports: [
@@ -63,7 +64,8 @@ export class AppModule implements NestModule {
         ProductController,
         CartController,
         PaymentMethodController,
-        AddressController
+        AddressController,
+        OrderController
       );
   }
 }
