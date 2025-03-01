@@ -14,20 +14,20 @@ export enum STATUS {
 
 @Entity()
 export class Order extends BaseEntity {
-  @OneToOne(() => Cart, (cart) => cart.id)
+  @OneToOne(() => Cart, (cart) => cart.id, {nullable: false})
   @JoinColumn()
   @ApiProperty()
   cart: Cart;
 
-  @Column({ type: 'enum', enum: STATUS, default: STATUS.PENDING })
+  @Column({ type: 'enum', enum: STATUS, default: STATUS.PENDING, nullable: false})
   @ApiProperty({enum: STATUS, default: STATUS.PENDING})
   status: STATUS;
 
-  @ManyToOne(() => Address, (address) => address.id)
+  @ManyToOne(() => Address, (address) => address.id, {nullable: false})
   @ApiProperty()
   address: Address;
 
-  @ManyToOne(() => PaymentMethod, (paymentMethod) => paymentMethod.id)
+  @ManyToOne(() => PaymentMethod, (paymentMethod) => paymentMethod.id, {nullable: false})
   @JoinColumn()
   @ApiProperty()
   paymentMethod: PaymentMethod;

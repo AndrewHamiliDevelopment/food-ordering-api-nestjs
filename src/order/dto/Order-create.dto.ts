@@ -13,4 +13,11 @@ export class OrderCreateDto {
   @IsNotEmpty()
   @ApiProperty()
   addressId: number;
+
+  @IsNumber()
+  @Min(1)
+  @IsNotEmpty()
+  @ApiProperty()
+  paymentMethodId: number;
+
 }
