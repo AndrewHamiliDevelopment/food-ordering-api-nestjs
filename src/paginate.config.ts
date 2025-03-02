@@ -30,6 +30,7 @@ export const productPaginateConfig: PaginateConfig<Product> = {
   defaultLimit: 10,
   defaultSortBy: [['dateEntry', 'DESC']],
   sortableColumns: ['dateEntry'],
+  searchableColumns: ['name'],
   relations: ['images', 'category', 'thumbnail'],
 };
 
