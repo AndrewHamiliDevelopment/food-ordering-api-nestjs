@@ -4,6 +4,13 @@ import { ProductSnapshot } from 'src/product/entities/product-snapshot.entity';
 import { BaseEntity } from 'src/Base.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
+export enum Status {
+  PENDING = "PENDING",
+  PREPARING = "PREPARING",
+  PACKING = "PACKING",
+  DONE = "DONE"
+}
+
 @Entity()
 export class CartItem extends BaseEntity {
   @ManyToOne(() => Cart, (cart) => cart.id, { cascade: true, nullable: false })
