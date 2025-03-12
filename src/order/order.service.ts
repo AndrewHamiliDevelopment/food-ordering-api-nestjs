@@ -16,6 +16,7 @@ import { ExtendedRequest, isSuperUser, Role } from 'src/shared';
 import { User } from 'src/users/entities/user.entity';
 import { OrderUpdateDto } from './dto/Order-update.dto';
 import { PaymentMethod } from 'src/payment-method/entities/payment-method.entity';
+import { PaypalService } from 'src/paypal/paypal.service';
 
 @Injectable()
 export class OrderService {
@@ -29,6 +30,7 @@ export class OrderService {
     private readonly addressRepository: Repository<Address>,
     @InjectRepository(PaymentMethod)
     private readonly paymentMethodRepository: Repository<PaymentMethod>,
+    private readonly paypalService: PaypalService,
   ) {}
 
   list = async (req: ExtendedRequest, query: PaginateQuery) => {
@@ -48,9 +50,10 @@ export class OrderService {
     const { user: u } = req;
     const user = <User>u;
     const { cartId, addressId, paymentMethodId } = dto;
-    this.logger.log('🚀 ~ OrderService ~ cartId:', { cartId });
+    console.log("🚀 ~ OrderService ~ create= ~ dto:", dto)
     const cart = await this.cartRepository.findOne({
       where: { id: cartId, isCheckedOut: false, dateCheckedOut: null, user: {id: user.id} },
+      relations: ['cartItems', 'cartItems.product']
     });
     if (cart === null) {
       throw new BadRequestException('Cart is invalid. Please try again later');
@@ -68,6 +71,9 @@ export class OrderService {
       throw new BadRequestException('Payment Method is invalid');
     }
     const order = await this.repository.save({ cart, address, paymentMethod });
+    this.logger.log("🚀 ~ OrderService ~ create= ~ cart:", cart)
+    const payment = await this.paypalService.generatePaymentRequest(cart.cartItems);
+    this.logger.log("🚀 ~ OrderService ~ create= ~ payment:", payment.data);
     await this.cartRepository.save({id: cart.id, isCheckedOut: true, dateCheckedOut: new Date()})
     return await this.repository.findOne({
       where: { id: order.id },

@@ -12,7 +12,6 @@ import { CategoryAddDto } from './dto/category-add.dto';
 import { Resource } from 'src/resource/entities/resource.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExtendedRequest, isSuperUser } from 'src/shared';
-import { User } from 'src/users/entities/user.entity';
 import { CategoryUpdateDto } from './dto/category-update.dto';
 
 @Injectable()

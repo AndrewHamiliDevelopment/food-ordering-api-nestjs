@@ -27,6 +27,7 @@ import { OrderModule } from './order/order.module';
 import { AddressModule } from './address/address.module';
 import { AddressController } from './address/address.controller';
 import { OrderController } from './order/order.controller';
+import { PaypalModule } from './paypal/paypal.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { OrderController } from './order/order.controller';
     SmtpmailerModule,
     OrderModule,
     AddressModule,
+    PaypalModule,
   ],
   controllers: [AppController],
   providers: [AppService],

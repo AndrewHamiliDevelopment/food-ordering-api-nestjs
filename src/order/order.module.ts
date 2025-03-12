@@ -7,10 +7,12 @@ import { Cart } from 'src/cart/entities/cart.entity';
 import { CartItem } from 'src/cart/entities/cart-item.entity';
 import { Address } from 'src/address/entities/address.entity';
 import { PaymentMethod } from 'src/payment-method/entities/payment-method.entity';
+import { PaypalModule } from 'src/paypal/paypal.module';
+import { PaypalService } from 'src/paypal/paypal.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, Cart, CartItem, Address, PaymentMethod])],
+  imports: [TypeOrmModule.forFeature([Order, Cart, CartItem, Address, PaymentMethod]), PaypalModule],
   controllers: [OrderController],
-  providers: [OrderService],
+  providers: [OrderService, PaypalService],
 })
 export class OrderModule {}
