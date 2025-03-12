@@ -21,7 +21,7 @@ export class Order extends BaseEntity {
   @ApiProperty()
   cart: Cart;
 
-  @Column({ type: 'enum', enum: STATUS, default: STATUS.PENDING, nullable: false})
+  @Column({ type: 'enum', enum: STATUS, default: STATUS.UNPAID, nullable: false})
   @ApiProperty({enum: STATUS, default: STATUS.UNPAID})
   status: STATUS;
 
