@@ -30,6 +30,7 @@ export const productPaginateConfig: PaginateConfig<Product> = {
   defaultLimit: 10,
   defaultSortBy: [['dateEntry', 'DESC']],
   sortableColumns: ['dateEntry'],
+  searchableColumns: ['name'],
   relations: ['images', 'category', 'thumbnail'],
 };
 
@@ -45,5 +46,5 @@ export const orderPaginateConfig: PaginateConfig<Order> = {
   defaultSortBy: [['dateEntry', 'DESC']],
   sortableColumns: ['dateEntry'],
   filterableColumns: {'cart.cartItems.product.name': [FilterOperator.ILIKE]},
-  relations: ['address', 'cart', 'cart.cartItems', 'cart.cartItems.product', 'paymentMethod']
+  relations: ['address', 'cart', 'paymentMethod', 'cart.cartItems', 'cart.cartItems.product', 'cart.cartItems.product.thumbnail']
 };

@@ -15,6 +15,7 @@ import { Address } from 'src/address/entities/address.entity';
 import { ExtendedRequest, isSuperUser, Role } from 'src/shared';
 import { User } from 'src/users/entities/user.entity';
 import { OrderUpdateDto } from './dto/Order-update.dto';
+import { PaymentMethod } from 'src/payment-method/entities/payment-method.entity';
 
 @Injectable()
 export class OrderService {
@@ -26,6 +27,8 @@ export class OrderService {
     private readonly cartRepository: Repository<Cart>,
     @InjectRepository(Address)
     private readonly addressRepository: Repository<Address>,
+    @InjectRepository(PaymentMethod)
+    private readonly paymentMethodRepository: Repository<PaymentMethod>,
   ) {}
 
   list = async (req: ExtendedRequest, query: PaginateQuery) => {
@@ -44,7 +47,7 @@ export class OrderService {
     }
     const { user: u } = req;
     const user = <User>u;
-    const { cartId, addressId } = dto;
+    const { cartId, addressId, paymentMethodId } = dto;
     this.logger.log('🚀 ~ OrderService ~ cartId:', { cartId });
     const cart = await this.cartRepository.findOne({
       where: { id: cartId, isCheckedOut: false, dateCheckedOut: null, user: {id: user.id} },
@@ -60,7 +63,11 @@ export class OrderService {
         'Address is invalid. Please check the form properly',
       );
     }
-    const order = await this.repository.save({ cart, address });
+    const paymentMethod = await this.paymentMethodRepository.findOne({where: {id: paymentMethodId}});
+    if(paymentMethod === null) {
+      throw new BadRequestException('Payment Method is invalid');
+    }
+    const order = await this.repository.save({ cart, address, paymentMethod });
     await this.cartRepository.save({id: cart.id, isCheckedOut: true, dateCheckedOut: new Date()})
     return await this.repository.findOne({
       where: { id: order.id },

@@ -6,8 +6,10 @@ import { Address } from 'src/address/entities/address.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 
 export enum STATUS {
+  UNPAID = 'UNPAID',
   PENDING = 'PENDING',
   PROCESSING = 'PROCESSING',
+  PROCESSED = 'PROCESSED',
   IN_TRANSIT = 'IN TRANSIT',
   DELIVERED = 'DELIVERED',
 }
@@ -20,7 +22,7 @@ export class Order extends BaseEntity {
   cart: Cart;
 
   @Column({ type: 'enum', enum: STATUS, default: STATUS.PENDING, nullable: false})
-  @ApiProperty({enum: STATUS, default: STATUS.PENDING})
+  @ApiProperty({enum: STATUS, default: STATUS.UNPAID})
   status: STATUS;
 
   @ManyToOne(() => Address, (address) => address.id, {nullable: false})
