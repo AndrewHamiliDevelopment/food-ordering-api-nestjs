@@ -82,6 +82,10 @@ export class UsersService {
       throw new UnauthorizedException('Your account is not authorized to use this module');
     }
   };
+  getOneInternal = async (props: {id: number}) => {
+    const {id} = props;
+    return await this.repository.findOne({where: {id}});
+  }
   create = async (props: { req: ExtendedRequest; dto: UserCreateDto }) => {
     const { dto, req } = props;
     const role = req.role;

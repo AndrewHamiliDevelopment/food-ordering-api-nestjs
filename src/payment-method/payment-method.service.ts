@@ -19,6 +19,24 @@ export class PaymentMethodService {
     private readonly repository: Repository<PaymentMethod>,
   ) {}
 
+  getOneInternal = async (id: number) => {
+    return await this.repository.findOne({where: {id}});
+  }
+
+  get = async (props: {id: number; forCheckout: boolean}) => {
+    const {id, forCheckout} = props;
+    let paymentMethod: PaymentMethod | null = null;
+    if(forCheckout) {
+      paymentMethod = await this.repository.findOne({where: {id, enabled: true}});
+    } else {
+      paymentMethod = await this.repository.findOne({where: {id}});
+    }
+    if(paymentMethod === null) {
+      throw new NotFoundException(`Payment method ID ${id} not found or is disabled`);
+    }
+    return paymentMethod;
+  }
+
   list = (query: PaginateQuery) => {
     return paginate(query, this.repository, {
       ...paymentMethodPaginateConfig,

@@ -58,11 +58,14 @@ export class ResourceService {
     );
   };
 
-  findOne = async (id: number) => {
-    const resource = this.repository.findOne({ where: { id } });
+  getOne = async (id: number) => {
+    const resource = await this.repository.findOne({ where: { id } });
     return resource !== null && resource;
     throw new NotFoundException('File not found');
   };
+  getOneInternal = async (id: number) => {
+    return await this.repository.findOne({where: {id}});
+  }
 
   outFile = async (props: { id: number }) => {
     const { id } = props;

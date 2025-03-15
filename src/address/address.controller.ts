@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Request } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
 import { AddressService } from './address.service';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ExtendedRequest } from 'src/shared';
@@ -15,6 +15,11 @@ export class AddressController {
   @ApiResponse({type: Address, isArray: true, description: 'List of address/es created by user'})
   list (@Request() req: ExtendedRequest) {
     return this.addressService.list(req);
+  }
+  @Get(':id')
+  @ApiResponse({type: Address, description: 'Get address by ID'})
+  getById (@Param('id') id: number, @Request() req: ExtendedRequest) {
+    return this.addressService.get(req, id);
   }
 
   @Post()

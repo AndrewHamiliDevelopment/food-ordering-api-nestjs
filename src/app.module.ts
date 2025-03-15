@@ -27,6 +27,8 @@ import { OrderModule } from './order/order.module';
 import { AddressModule } from './address/address.module';
 import { AddressController } from './address/address.controller';
 import { OrderController } from './order/order.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Order } from './order/entities/order.entity';
 
 @Module({
   imports: [

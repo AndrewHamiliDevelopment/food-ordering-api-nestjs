@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Cart } from './entities/cart.entity';
 import { ExtendedRequest } from 'src/shared';
@@ -8,6 +8,8 @@ import { Product } from 'src/product/entities/product.entity';
 import { CartItem } from './entities/cart-item.entity';
 import { ProductSnapshot } from 'src/product/entities/product-snapshot.entity';
 import { CartAddProductDto } from './dto/cart-add-product.dto';
+import { UsersService } from 'src/users/users.service';
+import { ProductService } from 'src/product/product.service';
 
 @Injectable()
 export class CartService {
@@ -16,18 +18,17 @@ export class CartService {
     @InjectRepository(Cart) private readonly repository: Repository<Cart>,
     @InjectRepository(CartItem)
     private readonly cartItemRepository: Repository<CartItem>,
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
     @InjectRepository(ProductSnapshot)
     private readonly productSnapshotRepository: Repository<ProductSnapshot>,
+    private readonly userService: UsersService,
+    private readonly productService: ProductService,
   ) {}
 
-  get = async (req: ExtendedRequest) => {
+  get = async (req: ExtendedRequest, cartId?: number) => {
     const { user: u } = req;
     const user = <User>u;
     const { id: userId } = user;
-    return await this.getOrCreate(userId);
+    return await this.getOrCreate(userId, cartId);
   };
 
   addToCart = async (props: {
@@ -39,12 +40,12 @@ export class CartService {
     const { user: u } = req;
     const user = <User>u;
     const cart = await this.getOrCreate(user.id);
-    const product = await this.productRepository.findOne({
-      where: { id: productId, enabled: true },
-      relations: ['category', 'thumbnail', 'images'],
-    });
-    if (product !== null) {
-      const { name, description, price, category, thumbnail, enabled } =
+    const product = await this.productService.getInternal(productId);
+    if(product === null) {
+      this.logger.error(`Product ID: ${productId} not found.`)
+      throw new BadRequestException('Product not found.');
+    }
+    const { name, description, price, category, thumbnail, enabled } =
         product;
       const productSnapshot = await this.productSnapshotRepository.save({
         product,
@@ -73,11 +74,6 @@ export class CartService {
         });
       }
       return await this.getOrCreate(user.id);
-    } else {
-      throw new BadRequestException(
-        'Product does not exist. Please try again later',
-      );
-    }
   };
 
   removeToCart = async (props: {
@@ -90,12 +86,10 @@ export class CartService {
     const { user: u } = req;
     const user = <User>u;
     const cart = await this.getOrCreate(user.id);
-    const product = await this.productRepository.findOne({
-      where: { id: productId, enabled: true },
-      relations: ['category', 'thumbnail', 'images'],
-    });
+    const product = await this.productService.getInternal(productId);
     if(product === null) {
-      throw new BadRequestException('Product not found or is already disabled. Please try again')
+      this.logger.error(`Product ID: ${productId} not found`);
+      throw new BadRequestException('Product not found');
     }
     const cartItem = await this.cartItemRepository.findOne({
       where: {
@@ -116,20 +110,32 @@ export class CartService {
     return this.getOrCreate(user.id);
   };
 
-  checkout = async (req: ExtendedRequest) => {
+  checkout = async (req: ExtendedRequest, props: {id: number}) => {
+    const {id} = props;
+    this.logger.log(`Tagging Cart ID: ${id} to ${JSON.stringify({isCheckedOut: true})}`)
     const { user: u } = req;
     const user = <User>u;
     const { id: userId } = user;
-    const cart = await this.getOrCreate(userId);
+    const cart = await this.getOrCreate(userId, id);
     await this.repository.save({
       ...cart,
       isCheckedOut: true,
       dateCheckedOut: new Date(),
     });
+    this.logger.log(`Done tagging Cart ID: ${id} to ${JSON.stringify({isCheckedOut: true})}`)
   };
 
-  private getOrCreate = async (userId: number) => {
-    this.logger.log(`User ID: `, { userId });
+  private getOrCreate = async (userId: number, id?: number) => {
+    this.logger.log('Get or Create cart...');
+    this.logger.log(`User ID: ${userId}`);
+    this.logger.log(`Cart ID: ${id}`)
+    if(id) {
+      return await this.repository.findOne({
+        where: {id, user: { id: userId }, isCheckedOut: false },
+        relations: ['user', 'user.userDetail', 'cartItems', 'cartItems.product', 'cartItems.product', 'cartItems.product.product'],
+        order: {cartItems: {quantity: 'DESC'}}
+      });
+    }
     let cart = await this.repository.findOne({
       where: { user: { id: userId }, isCheckedOut: false },
       relations: ['user', 'user.userDetail', 'cartItems', 'cartItems.product', 'cartItems.product', 'cartItems.product.product'],
@@ -137,10 +143,14 @@ export class CartService {
     });
     if (cart === null) {
       this.logger.log('No cart exists for user. Create a new cart');
-      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const user = await this.userService.getOneInternal({ id: userId });
+      if(user === null) {
+        this.logger.error(`User ID: ${userId} not found.`);
+        throw new BadRequestException(`User not found.`)
+      }
       cart = await this.repository.save({ user, dateCheckedOut: null });
       cart = await this.repository.findOne({
-        where: { user: { id: userId }, isCheckedOut: false },
+        where: { id: cart.id },
         relations: ['user', 'user.userDetail', 'cartItems', 'cartItems.product', 'cartItems.product', 'cartItems.product.product'],
         order: {cartItems: {quantity: 'DESC'}}
       });

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -15,12 +16,14 @@ import { OrderUpdateDto } from './dto/Order-update.dto';
 import { orderPaginateConfig } from 'src/paginate.config';
 import { Order } from './entities/order.entity';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CartService } from 'src/cart/cart.service';
 
 @Controller({ path: 'orders', version: '1'})
 @ApiBearerAuth('access-token')
 @ApiTags('Orders')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  private logger = new Logger(OrderController.name);
+  constructor(private readonly orderService: OrderService, private readonly cartService: CartService) {}
 
   @Get()
   @ApiPaginationQuery(orderPaginateConfig)
@@ -32,8 +35,13 @@ export class OrderController {
   
   @Post()
   @ApiResponse({type: Order})
-  create(@Request() req: ExtendedRequest, @Body() dto: OrderCreateDto) {
-    return this.orderService.create(req, dto);
+  async create(@Request() req: ExtendedRequest, @Body() dto: OrderCreateDto) {
+    this.logger.log('Creating Order...');
+    const order = await this.orderService.create(req, dto);
+    this.logger.log('Updating cart...');
+    await this.cartService.checkout(req, {id: dto.cartId});
+    this.logger.log('Send Order response');
+    return this.orderService.getOne(req, order.id);
   }
   
   @Get(':id')

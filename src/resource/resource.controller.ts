@@ -47,7 +47,7 @@ export class ResourceController {
   @Get(':id')
   getOne(@Param('id') id: number) {
     this.logger.log('get by ID', { id });
-    return this.resourceService.findOne(id);
+    return this.resourceService.getOne(id);
   }
   @Post()
   @UseInterceptors(FileInterceptor('file'))

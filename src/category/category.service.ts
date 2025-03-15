@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -14,6 +15,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ExtendedRequest, isSuperUser } from 'src/shared';
 import { User } from 'src/users/entities/user.entity';
 import { CategoryUpdateDto } from './dto/category-update.dto';
+import { ResourceService } from 'src/resource/resource.service';
 
 @Injectable()
 export class CategoryService {
@@ -21,10 +23,13 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly repository: Repository<Category>,
-    @InjectRepository(Resource)
-    private readonly resourceRepository: Repository<Resource>,
+    private readonly resourceService: ResourceService,
     private readonly entityManager: EntityManager,
   ) {}
+
+  getOneInternal = async (id: number) => {
+    return await this.repository.findOne({where: {id}});
+  }
 
   list = async (query: PaginateQuery) => {
     return paginate(query, this.repository, categoryPaginateConfig);
@@ -49,9 +54,11 @@ export class CategoryService {
         parent = await this.repository.findOne({ where: { id: categoryId } });
         this.logger.log('🚀 ~ CategoryService ~ create= ~ parent:', parent);
       }
-      const thumbnail = await this.resourceRepository.findOne({
-        where: { id: thumbnailId },
-      });
+      const thumbnail = await this.resourceService.getOneInternal(thumbnailId);
+      if(thumbnail === null) {
+        this.logger.error(`Resource ID: ${thumbnailId} not found.`);
+        throw new BadRequestException('Thumbnail not found.');
+      }
       this.logger.log('🚀 ~ CategoryService ~ create= ~ thumbnail:', thumbnail);
       return await this.repository.save({
         name,
@@ -84,9 +91,11 @@ export class CategoryService {
     if (proceed) {
       const category = await this.repository.findOne({ where: { id } });
       if (category !== null) {
-        const thumbnail = await this.resourceRepository.findOne({
-          where: { id: thumbnailId },
-        });
+        const thumbnail = await this.resourceService.getOneInternal(thumbnailId);
+        if (thumbnail === null) {
+          this.logger.error(`Thumbnail ${thumbnailId} not found.`);
+          throw new BadRequestException('Thumbnail not found.');
+        }
         const parent = await this.repository.findOne({
           where: { id: categoryId },
         });
