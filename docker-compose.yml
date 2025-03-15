@@ -1,0 +1,27 @@
+version: "3.6"
+
+networks:
+  andrewhamili-network:
+    driver: "bridge"
+
+services:
+
+  mysql:
+    image: mysql:8.0.19
+    container_name: foodordering-api-mysql
+    platform: linux/amd64
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "33067:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: fos_dev
+      MYSQL_USER: fos
+      MYSQL_PASSWORD: fos
+      MYSQL_ROOT_PASSWORD: fos
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    networks:
+      - andrewhamili-network
