@@ -92,8 +92,7 @@ export class ResourceService {
           console.error(error);
         }
       } catch (error) {
-        console.log('error', error);
-        this.logger.error(error);
+        this.logger.error('error', error);
       }
     }
     throw new NotFoundException(

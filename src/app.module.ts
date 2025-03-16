@@ -55,6 +55,8 @@ export class AppModule implements NestModule {
         { path: '/v1/payment-method', method: RequestMethod.GET },
         { path: '/v1/products', method: RequestMethod.GET },
         { path: '/v1/resource/file/:id', method: RequestMethod.GET },
+        { path: '/v1/orders/payment/:uuid', method: RequestMethod.GET },
+        { path: '/v1/orders/payment/methods', method: RequestMethod.GET },
       )
       .forRoutes(
         UsersController,

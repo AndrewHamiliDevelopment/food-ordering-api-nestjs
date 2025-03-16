@@ -43,7 +43,7 @@ export class FirebaseMiddleware implements NestMiddleware {
     );
     this.env = this.configService.getOrThrow<string>('NODE_ENV');
     this.projectId = projectId;
-    this.logger.log('FIREBASE', { projectId, privateKey, clientEmail });
+    this.logger.log(`FIREBASE: ${JSON.stringify({ projectId, privateKey, clientEmail }, null, 2)}`);
     firebase.initializeApp({
       credential: firebase.credential.cert({
         projectId,
@@ -136,7 +136,7 @@ export class FirebaseMiddleware implements NestMiddleware {
             req.user = user;
           } catch (error) {
             const errorM: ErrorModel[] = error;
-            console.log('🚀 ~ FirebaseMiddleware ~ use ~ errorM:', errorM);
+            this.logger.log('🚀 ~ FirebaseMiddleware ~ use ~ errorM:', errorM);
             errorMessages.push(...errorM);
           }
         }

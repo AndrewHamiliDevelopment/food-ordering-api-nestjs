@@ -24,7 +24,7 @@ export class SmtpmailerService {
         text,
         html,
       });
-      console.log('🚀 ~ SmtpmailerService ~ send= ~ response:', response);
+      this.logger.log('🚀 ~ SmtpmailerService ~ send= ~ response:', response);
     } catch (error) {
       this.logger.error('Mailer error', error);
     }

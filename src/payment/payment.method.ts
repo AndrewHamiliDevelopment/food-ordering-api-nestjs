@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Order } from 'src/order/entities/order.entity';
+import { Order, STATUS } from 'src/order/entities/order.entity';
 import { PaypalService } from './paypal.service';
 import { each, has } from 'lodash';
 import { PaymentModel } from './model/paypal/payment.model';
@@ -8,10 +8,13 @@ import { Payment } from './entities/payment.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentResponseModel } from './model/paypal/payment-response.model';
+import { CashService } from './cash.service';
+import { of } from 'rxjs';
+import { ExtendedRequest } from 'src/shared';
 
 export abstract class PaymentMethod {
-  abstract createPayment(order: Order): void;
-  abstract executePayment(order: Order): void;
+  abstract createPayment(req: ExtendedRequest, order: Order): void;
+  abstract executePayment(order: Order, params?: URLSearchParams): void;
 }
 
 @Injectable()
@@ -23,7 +26,7 @@ export class PaypalPaymentMethod implements PaymentMethod {
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
   ) {}
-  createPayment = async (order: Order) => {
+  createPayment = async (req: ExtendedRequest, order: Order) => {
     const currency = 'PHP';
     this.logger.log(`Create paypal payment for Order ID: ${order.id}`);
     const payload = new PaymentModel();
@@ -36,7 +39,7 @@ export class PaypalPaymentMethod implements PaymentMethod {
       orderItems.push({ name, description, price, quantity, currency });
     });
     payload.items = orderItems;
-    payload.returnUrl = `http://localhost:90/v1/order/payment/${order.uuid}`;
+    payload.returnUrl = `${req.protocol}://${req.host}/v1/orders/payment/${order.uuid}`;
     payload.description = 'Online Food Ordering payment';
     this.logger.log(`Paypal payment payload: ${JSON.stringify(payload, null, 2)}`);
     const paypalResponse = await this.paypalService.generatePayment(payload);
@@ -47,8 +50,50 @@ export class PaypalPaymentMethod implements PaymentMethod {
     this.repository.save({ order, paymentMethodProps: response });
   };
 
+  executePayment = async (order: Order, params: URLSearchParams) => {
+    const { payment } = order;
+    const { paymentMethodProps: props } = payment;
+    const paymentProps = new PaymentResponseModel();
+    Object.assign(paymentProps, props);
+    if(params) {
+        let inquiry = params.has('paymentId');
+        let execute = params.has('token') && params.has('PayerID');
+        if(inquiry && execute) {
+            const paymentId = params.get('paymentId');
+            const token = params.get('token');
+            const PayerID = params.get('PaymentID');
+            const response = await this.paypalService.executePayment({paymentId, token, PayerID});
+            const prm = new PaymentResponseModel();
+            Object.assign(prm, response.data);
+            this.logger.log(`Response ${JSON.stringify(prm, null, 2)}`);
+            if(paymentProps.id === prm.id) {
+                this.logger.log('Order match!');
+            }
+        }   
+    }
+  }
+}
+
+@Injectable()
+export class CashPaymentMethod implements PaymentMethod {
+  private logger = new Logger(CashPaymentMethod.name);
+  constructor(
+    private readonly cashService: CashService,
+    @InjectRepository(Payment) private readonly repository: Repository<Payment>,
+    @InjectRepository(Order) private readonly orderRepository: Repository<Order>,
+  ) {}
+  createPayment = async (req: ExtendedRequest, order: Order) => {
+    this.logger.log(`Order: ${JSON.stringify(order)}`);
+    this.logger.log('Cash Payment Method.');
+    this.logger.log('Nothing to process.');
+    this.logger.log(`Set Status to ${STATUS.PROCESSING}`);
+    const paymentObject = {totalAmount: await this.cashService.generatePayment(order)}
+    this.orderRepository.save({id: order.id, satus: STATUS.PROCESSING})
+    this.repository.save({order, paymentMethodProps: paymentObject});
+  }
   executePayment(order: Order): void {
-      const {payment} = order;
-      const {paymentMethodProps: props} = payment;
+    this.logger.log(`Order: ${JSON.stringify(order)}`);
+    this.logger.log('Cash payment');
+    this.logger.log('Nothing to do here.');
   }
 }

@@ -122,7 +122,7 @@ export class UsersService {
     dto: UserUpdateDto;
   }) => {
     const { userId, dto, req } = props;
-    console.log("🚀 ~ UsersService ~ props:", props)
+    this.logger.log("🚀 ~ UsersService ~ props:", props)
     const { user: u} = req
     const user = <User>u;
     const role = req.role;
@@ -144,7 +144,7 @@ export class UsersService {
         }
       }
       const updateUser = await this.repository.findOne({where: {id: userId}});
-      console.log("🚀 ~ UsersService ~ updateUser:", updateUser);
+      this.logger.log("🚀 ~ UsersService ~ updateUser:", updateUser);
       if(updateUser === null) {
         throw new BadRequestException(`User ID: ${userId} not found`)
       }

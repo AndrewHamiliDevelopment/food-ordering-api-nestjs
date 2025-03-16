@@ -23,6 +23,7 @@ import { PaymentMethodService } from 'src/payment-method/payment-method.service'
 import { PaymentService } from 'src/payment/payment.service';
 import { PaypalPaymentMethod } from 'src/payment/payment.method';
 import { PaypalService } from 'src/payment/paypal.service';
+import { toArray } from 'lodash';
 
 @Injectable()
 export class OrderService {
@@ -76,7 +77,7 @@ export class OrderService {
     }
     const { user: u } = req;
     const user = <User>u;
-    const { cartId, addressId, paymentMethodId } = dto;
+    const { cartId, addressId, paymentMethod } = dto;
     const cart = await this.cartService.get(req, cartId);
     if(cart === null) {
       this.logger.error(`Cart ID: ${cartId} is invalid or already checked out`);
@@ -91,16 +92,7 @@ export class OrderService {
       this.logger.log(`Address ID: ${addressId} not found.`)
       throw new BadRequestException(`Address not found.`);
     }
-    const paymentMethod = await this.paymentMethodService.getOneInternal(paymentMethodId);
-    if(paymentMethod === null) {
-      this.logger.error(`Payment Method ID: ${paymentMethodId} not found.`);
-      throw new BadRequestException('Payment Method not found.');
-    } else if( !paymentMethod.enabled) {
-      const {id, name} = paymentMethod;
-      this.logger.error(`Payment Method ID: ${{id, name}} is disabled.`);
-      throw new BadRequestException(`Payment method: ${name.toUpperCase()} is disabled`);
-    }
-    const order = await this.repository.save({ cart, address, paymentMethod: PAYMENT_METHOD.PAYPAL });
+    const order = await this.repository.save({ cart, address, paymentMethod });
     return await this.getOneInternal(order.id);
   };
 
@@ -136,6 +128,10 @@ export class OrderService {
       }
     }
   };
+
+  paymentMethods = () => {
+    return toArray(PAYMENT_METHOD)
+  }
 
   private orderList = async (props: {
     query: PaginateQuery;

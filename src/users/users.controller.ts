@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -19,6 +20,7 @@ import { UserUpdateDto } from './dto/User-update.dto';
 @ApiBearerAuth('access-token')
 @ApiTags('Users')
 export class UsersController {
+  private readonly logger = new Logger(UsersController.name);
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
@@ -40,7 +42,7 @@ export class UsersController {
     @Request() req: ExtendedRequest,
     @Body() dto: UserUpdateDto,
   ) {
-    console.log('id', id);
+    this.logger.log(`id: ${id}`, );
     return this.usersService.update({ req, userId: id, dto });
   }
 }

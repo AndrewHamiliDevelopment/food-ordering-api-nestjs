@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PaymentMethod } from './payment.method';
 import { Order, PAYMENT_METHOD } from 'src/order/entities/order.entity';
 import { method } from 'lodash';
+import { ExtendedRequest } from 'src/shared';
 
 @Injectable()
 export class PaymentService {
@@ -13,20 +14,20 @@ export class PaymentService {
         this.paymentMethods[paymentMethod] = method;
     }
 
-    processPayment = async (order: Order) => {
+    processPayment = async (req: ExtendedRequest, order: Order) => {
         const {paymentMethod} = order;
         const method = this.paymentMethods[paymentMethod];
         if(method) {
-            await method.createPayment(order);
+            await method.createPayment(req, order);
         } else {
             throw new Error('Unsupported payment method')
         }
     }
-    executePayment = async (order: Order) => {
+    executePayment = async (order: Order, params?: URLSearchParams) => {
         const {paymentMethod} = order;
         const method = this.paymentMethods[paymentMethod];
         if(method) {
-            await method.executePayment(order);
+            await method.executePayment(order, params);
         } else {
             throw new Error('Unsupported payment method');
         }

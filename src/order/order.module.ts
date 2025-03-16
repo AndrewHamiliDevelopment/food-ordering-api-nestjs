@@ -29,9 +29,10 @@ import { Resource } from 'src/resource/entities/resource.entity';
 import { Category } from 'src/category/entities/category.entity';
 import { PaymentModule } from 'src/payment/payment.module';
 import { PaymentService } from 'src/payment/payment.service';
-import { PaypalPaymentMethod } from 'src/payment/payment.method';
+import { CashPaymentMethod, PaypalPaymentMethod } from 'src/payment/payment.method';
 import { PaypalService } from 'src/payment/paypal.service';
 import { Payment } from 'src/payment/entities/payment.entity';
+import { CashService } from 'src/payment/cash.service';
 
 @Module({
   imports: [
@@ -70,7 +71,9 @@ import { Payment } from 'src/payment/entities/payment.entity';
     CategoryService,
     PaymentService,
     PaypalPaymentMethod,
+    CashPaymentMethod,
     PaypalService,
+    CashService,
   ],
 })
 export class OrderModule {}
