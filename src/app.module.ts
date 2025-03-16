@@ -1,9 +1,4 @@
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -29,6 +24,7 @@ import { AddressController } from './address/address.controller';
 import { OrderController } from './order/order.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Order } from './order/entities/order.entity';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -44,6 +40,7 @@ import { Order } from './order/entities/order.entity';
     SmtpmailerModule,
     OrderModule,
     AddressModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -67,7 +64,7 @@ export class AppModule implements NestModule {
         CartController,
         PaymentMethodController,
         AddressController,
-        OrderController
+        OrderController,
       );
   }
 }

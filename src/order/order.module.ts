@@ -27,10 +27,50 @@ import { CategoryModule } from 'src/category/category.module';
 import { CategoryService } from 'src/category/category.service';
 import { Resource } from 'src/resource/entities/resource.entity';
 import { Category } from 'src/category/entities/category.entity';
+import { PaymentModule } from 'src/payment/payment.module';
+import { PaymentService } from 'src/payment/payment.service';
+import { PaypalPaymentMethod } from 'src/payment/payment.method';
+import { PaypalService } from 'src/payment/paypal.service';
+import { Payment } from 'src/payment/entities/payment.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, Cart, CartItem, ProductSnapshot, Address, PaymentMethod, User, UserDetail, Product, Resource, Category]), CartModule, AddressModule, PaymentMethodModule, UsersModule, ProductModule, ResourceModule, CategoryModule],
+  imports: [
+    TypeOrmModule.forFeature([
+      Order,
+      Cart,
+      CartItem,
+      ProductSnapshot,
+      Address,
+      PaymentMethod,
+      User,
+      UserDetail,
+      Product,
+      Resource,
+      Category,
+      Payment,
+    ]),
+    CartModule,
+    AddressModule,
+    PaymentMethodModule,
+    UsersModule,
+    ProductModule,
+    ResourceModule,
+    CategoryModule,
+    PaymentModule,
+  ],
   controllers: [OrderController],
-  providers: [OrderService, CartService, AddressService, PaymentMethodService, UsersService, ProductService, ResourceService, CategoryService],
+  providers: [
+    OrderService,
+    CartService,
+    AddressService,
+    PaymentMethodService,
+    UsersService,
+    ProductService,
+    ResourceService,
+    CategoryService,
+    PaymentService,
+    PaypalPaymentMethod,
+    PaypalService,
+  ],
 })
 export class OrderModule {}

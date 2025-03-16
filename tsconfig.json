@@ -18,5 +18,5 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
   },
-  "exclude": ["uploads, src/migrations"]
+  "exclude": ["uploads", "src/migrations"]
 }

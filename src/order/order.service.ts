@@ -5,11 +5,11 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Order } from './entities/order.entity';
+import { Order, PAYMENT_METHOD } from './entities/order.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
 import { orderPaginateConfig } from 'src/paginate.config';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { OrderCreateDto } from './dto/Order-create.dto';
 import { Cart } from 'src/cart/entities/cart.entity';
 import { Address } from 'src/address/entities/address.entity';
@@ -20,6 +20,9 @@ import { PaymentMethod } from 'src/payment-method/entities/payment-method.entity
 import { CartService } from 'src/cart/cart.service';
 import { AddressService } from 'src/address/address.service';
 import { PaymentMethodService } from 'src/payment-method/payment-method.service';
+import { PaymentService } from 'src/payment/payment.service';
+import { PaypalPaymentMethod } from 'src/payment/payment.method';
+import { PaypalService } from 'src/payment/paypal.service';
 
 @Injectable()
 export class OrderService {
@@ -39,7 +42,7 @@ export class OrderService {
   };
 
   getOneInternal = async (id: number) => {
-    return await this.repository.findOne({where: {id}});
+    return await this.repository.findOne({where: {id}, relations: orderPaginateConfig.relations});
   }
 
   getOne = async (req: ExtendedRequest, id: number) => {
@@ -49,9 +52,9 @@ export class OrderService {
     let order: Order | null;
     if(isBypass) {
       proceed = true;
-      order = await this.repository.findOne({where: { id }, relations: ['address', 'cart', 'cart.cartItems', 'cart.cartItems.product', 'paymentMethod']});
+      order = await this.repository.findOne({where: { id }, relations: orderPaginateConfig.relations});
     } else {
-      order = await this.repository.findOne({where: { id, cart: {user: {id: user.id}} }, relations: ['address', 'cart', 'cart.cartItems', 'cart.cartItems.product', 'paymentMethod']});
+      order = await this.repository.findOne({where: { id, cart: {user: {id: user.id}} }, relations: orderPaginateConfig.relations});
       if(order !== null) {
         proceed = true;
       }
@@ -60,6 +63,10 @@ export class OrderService {
       return order;
     }
     throw new UnauthorizedException('Your account is not allowed to use this module');
+  }
+
+  getOneByUuid = async (uuid: string) => {
+    return await this.repository.findOne({where: {uuid}, relations: orderPaginateConfig.relations});
   }
 
   create = async (req: ExtendedRequest, dto: OrderCreateDto) => {
@@ -93,11 +100,8 @@ export class OrderService {
       this.logger.error(`Payment Method ID: ${{id, name}} is disabled.`);
       throw new BadRequestException(`Payment method: ${name.toUpperCase()} is disabled`);
     }
-    const order = await this.repository.save({ cart, address, paymentMethod });
-    return await this.repository.findOne({
-      where: { id: order.id },
-      relations: ['address', 'cart', 'cart.cartItems', 'cart.cartItems.product', 'paymentMethod']
-    });
+    const order = await this.repository.save({ cart, address, paymentMethod: PAYMENT_METHOD.PAYPAL });
+    return await this.getOneInternal(order.id);
   };
 
   update = async (
