@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { Order, STATUS } from 'src/order/entities/order.entity';
 import { PaypalService } from './paypal.service';
 import { each, has } from 'lodash';
@@ -11,6 +11,7 @@ import { PaymentResponseModel } from './model/paypal/payment-response.model';
 import { CashService } from './cash.service';
 import { of } from 'rxjs';
 import { ExtendedRequest } from 'src/shared';
+import { OrderService } from 'src/order/order.service';
 
 export abstract class PaymentMethod {
   abstract createPayment(req: ExtendedRequest, order: Order): void;
@@ -23,8 +24,7 @@ export class PaypalPaymentMethod implements PaymentMethod {
   constructor(
     private readonly paypalService: PaypalService,
     @InjectRepository(Payment) private readonly repository: Repository<Payment>,
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
+    private readonly orderService: OrderService,
   ) {}
   createPayment = async (req: ExtendedRequest, order: Order) => {
     const currency = 'PHP';
@@ -55,23 +55,31 @@ export class PaypalPaymentMethod implements PaymentMethod {
     const { paymentMethodProps: props } = payment;
     const paymentProps = new PaymentResponseModel();
     Object.assign(paymentProps, props);
-    if(params) {
+    try {
+      if (params) {
         let inquiry = params.has('paymentId');
         let execute = params.has('token') && params.has('PayerID');
-        if(inquiry && execute) {
-            const paymentId = params.get('paymentId');
-            const token = params.get('token');
-            const PayerID = params.get('PaymentID');
-            const response = await this.paypalService.executePayment({paymentId, token, PayerID});
-            const prm = new PaymentResponseModel();
-            Object.assign(prm, response.data);
-            this.logger.log(`Response ${JSON.stringify(prm, null, 2)}`);
-            if(paymentProps.id === prm.id) {
-                this.logger.log('Order match!');
-            }
-        }   
+        if (inquiry && execute) {
+          const paymentId = params.get('paymentId');
+          const token = params.get('token');
+          const PayerID = params.get('PayerID');
+          const response = await this.paypalService.executePayment({ paymentId, token, PayerID });
+          const prm = new PaymentResponseModel();
+          Object.assign(prm, response.data);
+          if (paymentProps.id === prm.id) {
+            this.logger.log('Order match!');
+            return;
+          }
+        } else if (inquiry) {
+          const paymentId = params.get('paymentId');
+          const response = await this.paypalService.executePayment({ paymentId });
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error', error);
     }
-  }
+    throw new InternalServerErrorException();
+  };
 }
 
 @Injectable()
@@ -80,17 +88,16 @@ export class CashPaymentMethod implements PaymentMethod {
   constructor(
     private readonly cashService: CashService,
     @InjectRepository(Payment) private readonly repository: Repository<Payment>,
-    @InjectRepository(Order) private readonly orderRepository: Repository<Order>,
+    private readonly orderService: OrderService,
   ) {}
   createPayment = async (req: ExtendedRequest, order: Order) => {
     this.logger.log(`Order: ${JSON.stringify(order)}`);
     this.logger.log('Cash Payment Method.');
     this.logger.log('Nothing to process.');
     this.logger.log(`Set Status to ${STATUS.PROCESSING}`);
-    const paymentObject = {totalAmount: await this.cashService.generatePayment(order)}
-    this.orderRepository.save({id: order.id, satus: STATUS.PROCESSING})
-    this.repository.save({order, paymentMethodProps: paymentObject});
-  }
+    const paymentObject = { totalAmount: await this.cashService.generatePayment(order) };
+    this.repository.save({ order, paymentMethodProps: paymentObject });
+  };
   executePayment(order: Order): void {
     this.logger.log(`Order: ${JSON.stringify(order)}`);
     this.logger.log('Cash payment');

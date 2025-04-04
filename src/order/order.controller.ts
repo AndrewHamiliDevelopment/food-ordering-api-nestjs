@@ -1,15 +1,37 @@
-import { Body, Controller, Get, Logger, NotFoundException, Param, Patch, Post, Query, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { OrderService } from './order.service';
 import { OrderCreateDto } from './dto/Order-create.dto';
 import { ExtendedRequest } from 'src/shared';
 import { ApiOkPaginatedResponse, ApiPaginationQuery, Paginate, PaginateQuery } from 'nestjs-paginate';
 import { OrderUpdateDto } from './dto/Order-update.dto';
 import { orderPaginateConfig } from 'src/paginate.config';
-import { Order, PAYMENT_METHOD } from './entities/order.entity';
+import { Order, PAYMENT_METHOD, STATUS } from './entities/order.entity';
 import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CartService } from 'src/cart/cart.service';
 import { PaymentService } from 'src/payment/payment.service';
 import { CashPaymentMethod, PaypalPaymentMethod } from 'src/payment/payment.method';
+
+enum OrderStep {
+  CREATE = 'CREATE',
+  UPDATE_CART = 'UPDATE CART',
+  PAYMENT_PROCESS = 'PROCESS PAYMENT',
+  UPDATE_ORDER_STATUS = 'UPDATE ORDER STATUS',
+  DONE = 'DONE',
+  PAYMENT_EXECUTION = 'EXECUTE PAYMENT'
+}
 
 @Controller({ path: 'orders', version: '1' })
 @ApiBearerAuth('access-token')
@@ -36,63 +58,85 @@ export class OrderController {
 
   @Get('payment/methods')
   listPaymentMethods(@Request() req: ExtendedRequest) {
-    this.logger.log(`protocol: ${req.protocol}`, )
+    this.logger.log(`protocol: ${req.protocol}`);
     this.logger.log(`host: ${req.host}`);
     this.logger.log(`baseUrl: ${req.baseUrl}`);
-    this.logger.log(`hostname ${req.hostname}`, )
+    this.logger.log(`hostname ${req.hostname}`);
     return this.orderService.paymentMethods();
   }
   @Get('payment/:uuid')
   @ApiQuery({
     name: 'paymentId',
     type: String,
-    required: false
+    required: false,
   })
   @ApiQuery({
     name: 'token',
     type: String,
-    required: false
+    required: false,
   })
   @ApiQuery({
     name: 'PayerID',
     type: String,
-    required: false
+    required: false,
   })
   async executePayment(
     @Query('paymentId') paymentId: string,
     @Query('token') token: string,
     @Query('PayerID') PayerID: string,
     @Param('uuid') uuid: string,
-    @Request() req: ExtendedRequest,
   ) {
-    const order = await this.orderService.getOneByUuid(uuid);
+    let order = await this.orderService.getOneByUuid(uuid);
     if (order === null) {
       throw new NotFoundException('Order is invalid');
     }
     const params = new URLSearchParams();
-    if(paymentId) {
+    if (paymentId) {
       params.append('paymentId', paymentId);
     }
-    if(token) {
+    if (token) {
       params.append('token', token);
     }
-    if(PayerID) {
-      params.append('PayerID', PayerID)
+    if (PayerID) {
+      params.append('PayerID', PayerID);
     }
-      this.paymentService.executePayment(order, params);
-    return order;
+    try {
+      await this.paymentService.executePayment(order, params);
+      order = await  this.orderService.updateInternal(order.id, {status: STATUS.PAID});
+      return order;
+    } catch (error) {
+      this.logger.error('error', error);
+    }
+    throw new InternalServerErrorException('An internal server error has occurred');
   }
 
   @Post()
   @ApiResponse({ type: Order })
   async create(@Request() req: ExtendedRequest, @Body() dto: OrderCreateDto) {
-    this.logger.log('Creating Order...'); 
-    const order = await this.orderService.create(req, dto);
-    this.logger.log('Updating cart...');
-    await this.cartService.checkout(req, { id: dto.cartId });
-    await this.paymentService.processPayment(req, order);
-    this.logger.log('Send Order response');
-    return await this.orderService.getOne(req, order.id);
+    let currentStep: OrderStep | null = null;
+    let order: Order | null = null;
+    try {
+      this.logger.log('Creating Order...');
+      currentStep = OrderStep.CREATE;
+      order = await this.orderService.create(req, dto);
+      this.logger.log('Updating cart...');
+      currentStep = OrderStep.UPDATE_CART;
+      await this.cartService.checkout(req, { id: dto.cartId });
+      this.logger.log('Process payment...');
+      currentStep = OrderStep.PAYMENT_PROCESS;
+      const payment = await this.paymentService.processPayment(req, order);
+      this.logger.log('Update Order status');
+      currentStep = OrderStep.UPDATE_ORDER_STATUS;
+      this.orderService.updateInternal(order.id, { status: STATUS.UNPAID });
+      this.logger.log('Send Order response');
+      currentStep = OrderStep.DONE;
+      return await this.orderService.getOne(req, order.id);
+    } catch (error) {
+      this.logger.error('error', error);
+      throw new InternalServerErrorException(
+        `An error has occurred while processing the transaction. The last known step for your Order ID ${order.id} was on ${currentStep}`,
+      );
+    }
   }
 
   @Get(':id')

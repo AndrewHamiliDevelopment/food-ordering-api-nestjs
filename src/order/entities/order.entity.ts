@@ -8,7 +8,7 @@ import { Payment } from 'src/payment/entities/payment.entity';
 
 export enum STATUS {
   UNPAID = 'UNPAID',
-  PENDING = 'PENDING',
+  PAID = 'PAID',
   PROCESSING = 'PROCESSING',
   PROCESSED = 'PROCESSED',
   IN_TRANSIT = 'IN TRANSIT',

@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Order, PAYMENT_METHOD } from './entities/order.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { paginate, PaginateQuery } from 'nestjs-paginate';
@@ -33,7 +27,7 @@ export class OrderService {
     private readonly repository: Repository<Order>,
     private readonly cartService: CartService,
     private readonly addressService: AddressService,
-    private paymentMethodService: PaymentMethodService,
+    private readonly paymentMethodService: PaymentMethodService,
   ) {}
 
   list = async (req: ExtendedRequest, query: PaginateQuery) => {
@@ -43,35 +37,38 @@ export class OrderService {
   };
 
   getOneInternal = async (id: number) => {
-    return await this.repository.findOne({where: {id}, relations: orderPaginateConfig.relations});
-  }
+    return await this.repository.findOne({ where: { id }, relations: orderPaginateConfig.relations });
+  };
 
   getOne = async (req: ExtendedRequest, id: number) => {
-    const {user: u, isBypass, role} = req;
+    const { user: u, isBypass, role } = req;
     const user = <User>u;
     let proceed = false;
     let order: Order | null;
-    if(isBypass) {
+    if (isBypass) {
       proceed = true;
-      order = await this.repository.findOne({where: { id }, relations: orderPaginateConfig.relations});
+      order = await this.repository.findOne({ where: { id }, relations: orderPaginateConfig.relations });
     } else {
-      order = await this.repository.findOne({where: { id, cart: {user: {id: user.id}} }, relations: orderPaginateConfig.relations});
-      if(order !== null) {
+      order = await this.repository.findOne({
+        where: { id, cart: { user: { id: user.id } } },
+        relations: orderPaginateConfig.relations,
+      });
+      if (order !== null) {
         proceed = true;
       }
     }
-    if(proceed) {
+    if (proceed) {
       return order;
     }
     throw new UnauthorizedException('Your account is not allowed to use this module');
-  }
+  };
 
   getOneByUuid = async (uuid: string) => {
-    return await this.repository.findOne({where: {uuid}, relations: orderPaginateConfig.relations});
-  }
+    return await this.repository.findOne({ where: { uuid }, relations: orderPaginateConfig.relations });
+  };
 
   create = async (req: ExtendedRequest, dto: OrderCreateDto) => {
-    this.logger.log(`Start creating order: ${JSON.stringify(dto)}`)
+    this.logger.log(`Start creating order: ${JSON.stringify(dto)}`);
     if (req.isBypass) {
       throw new BadRequestException('Bypass access. Nothing to do here');
     }
@@ -79,27 +76,24 @@ export class OrderService {
     const user = <User>u;
     const { cartId, addressId, paymentMethod } = dto;
     const cart = await this.cartService.get(req, cartId);
-    if(cart === null) {
+    if (cart === null) {
       this.logger.error(`Cart ID: ${cartId} is invalid or already checked out`);
       throw new BadRequestException('Cart is invalid');
     }
-    if(cart.cartItems.length < 1) {
+    if (cart.cartItems.length < 1) {
       this.logger.error('No item/s in cart');
       throw new BadRequestException('No item/s in cart');
     }
-    const address = await this.addressService.getOneWithUserInternal({id: addressId, userId: user.id});
-    if(address === null) {
-      this.logger.log(`Address ID: ${addressId} not found.`)
+    const address = await this.addressService.getOneWithUserInternal({ id: addressId, userId: user.id });
+    if (address === null) {
+      this.logger.log(`Address ID: ${addressId} not found.`);
       throw new BadRequestException(`Address not found.`);
     }
     const order = await this.repository.save({ cart, address, paymentMethod });
     return await this.getOneInternal(order.id);
   };
 
-  update = async (
-    req: ExtendedRequest,
-    props: { dto: OrderUpdateDto; id: number },
-  ) => {
+  update = async (req: ExtendedRequest, props: { dto: OrderUpdateDto; id: number }) => {
     let proceed: boolean = false;
     if (req.isBypass) {
       proceed = true;
@@ -129,16 +123,19 @@ export class OrderService {
     }
   };
 
-  paymentMethods = () => {
-    return toArray(PAYMENT_METHOD)
-  }
+  updateInternal = async (id: number, dto: OrderUpdateDto) => {
+    const order = await this.repository.findOne({ where: { id } });
+    if(order !== null) {
+      const { status } = dto;
+      return await this.repository.save({id: order.id, status});
+    }
+  };
 
-  private orderList = async (props: {
-    query: PaginateQuery;
-    user: User;
-    role: Role;
-    isBypass: boolean;
-  }) => {
+  paymentMethods = () => {
+    return toArray(PAYMENT_METHOD);
+  };
+
+  private orderList = async (props: { query: PaginateQuery; user: User; role: Role; isBypass: boolean }) => {
     const { isBypass, user, role, query } = props;
     if (isBypass || isSuperUser({ role })) {
       this.logger.log('BYPASS User, return all without user filter');
