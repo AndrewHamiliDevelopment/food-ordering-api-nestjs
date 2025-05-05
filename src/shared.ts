@@ -4,6 +4,7 @@ import { Request } from 'express';
 import { User } from './users/entities/user.entity';
 import { UserRecord } from 'firebase-admin/lib/auth/user-record';
 import { has } from 'lodash';
+import { InternalServerErrorException } from '@nestjs/common';
 
 export enum Role {
   SUPERADMIN = 'SUPERADMIN',
@@ -31,7 +32,11 @@ export class ClaimError {
   message: string;
 }
 
-export type ExtendedRequest = Request & { user: User; role: Role };
+export type ExtendedRequest = Request & {
+  user: User;
+  role: Role;
+  isBypass: boolean;
+};
 
 export type ExtendedUserRecord = UserRecord & { shouldCreateClaims?: boolean };
 
@@ -74,20 +79,29 @@ export const firebaseSetCustomUserClaims = async (props: {
       (car) => car.app === app,
     );
     if (appClaimIndex >= 0) {
+      console.log(`Claims for app \'${app}\' exists`);
       const envClaimIndex = currentClaims.root[appClaimIndex].roles.findIndex(
         (cr) => cr.env === env,
       );
       if (envClaimIndex >= 0) {
+        console.log(`Claims for env \'${env}\' exists`);
         const envRole =
           currentClaims.root[appClaimIndex].roles[envClaimIndex].role;
+        console.log("🚀 ~ envRole:", envRole)
         if (envRole !== role) {
           currentClaims.root[appClaimIndex].roles[envClaimIndex].role = role;
         }
       }
+      firebase.auth().setCustomUserClaims(uid, currentClaims);
     } else {
       const claimsRole: ClaimsRole = { env, role };
-      const claimsAppRoot: ClaimsAppRoot = { app, roles: [claimsRole] };
-      const claimsRoot: ClaimsRoot = { root: [claimsAppRoot] };
+      const claimsAppRoot: ClaimsAppRoot = {
+        app,
+        roles: [claimsRole],
+      };
+      const claimsRoot: ClaimsRoot = {
+        root: [...currentClaims.root, claimsAppRoot],
+      };
       firebase.auth().setCustomUserClaims(uid, claimsRoot);
     }
   } else {
@@ -157,11 +171,15 @@ export const firebaseGetAppClaims = async (props: {
   env: string;
   userRecord: UserRecord;
 }): Promise<Role> => {
+  console.info('==========     CLAIMS     ==========');
   console.info('props', props);
   const { app, userRecord: user, env } = props;
   const claims = <ClaimsRoot>user.customClaims;
+  console.log('🚀 ~ claims:', JSON.stringify(claims));
   const errorModel: ErrorModel[] = [];
   if (!claims) {
+    errorModel.push({ message: 'User has no claims' });
+    return Promise.reject(errorModel);
   } else {
     const appClaimsIndex = claims.root.findIndex((cr) => cr.app === app);
     if (appClaimsIndex >= 0) {
@@ -183,7 +201,25 @@ export const firebaseGetAppClaims = async (props: {
 };
 
 export const isSuperUser = (props: { role: Role }) => {
+  console.log('===== Check if SUPERUSER =====');
   const { role } = props;
   const superRole = [Role.SUPERADMIN, Role.ADMIN];
+  console.log({ role, superRole });
   return superRole.includes(role);
 };
+
+export interface Mail {
+  to: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}
+
+export class DecimalColumnTransformer {
+  to(data: number): number {
+    return data;
+  }
+  from(data: string): number {
+    return parseFloat(data);
+  }
+}

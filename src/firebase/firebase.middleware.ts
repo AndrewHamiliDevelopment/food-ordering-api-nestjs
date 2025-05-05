@@ -43,8 +43,8 @@ export class FirebaseMiddleware implements NestMiddleware {
     );
     this.env = this.configService.getOrThrow<string>('NODE_ENV');
     this.projectId = projectId;
-    this.logger.log('FIREBASE', { projectId, privateKey, clientEmail });
-    const fApp = firebase.initializeApp({
+    this.logger.log(`FIREBASE: ${JSON.stringify({ projectId, privateKey, clientEmail }, null, 2)}`);
+    firebase.initializeApp({
       credential: firebase.credential.cert({
         projectId,
         privateKey,
@@ -65,14 +65,16 @@ export class FirebaseMiddleware implements NestMiddleware {
   async use(req: ExtendedRequest, res: any, next: () => void) {
     //next();
     let token = req.headers.authorization;
-    console.log('🚀 ~ FirebaseMiddleware ~ use ~ token:', token);
+    this.logger.log('🚀 ~ FirebaseMiddleware ~ use ~ token:', token);
     const errorMessages: ErrorModel[] = [];
     try {
       if (typeof token !== 'undefined') {
         token = token.replace('Bearer ', '');
+        req.isBypass = false;
         if (token === this.internalToken) {
-          this.logger.log('USES INTERNAL TOKEN');
+          this.logger.log('===== USES INTERNAL TOKEN =====');
           req.role = Role.SUPERADMIN;
+          req.isBypass = true;
         } else {
           const decodedToken = await firebaseVerifyIdToken({ idToken: token });
           const userRecord = await firebaseUserGetByUid({
@@ -134,7 +136,7 @@ export class FirebaseMiddleware implements NestMiddleware {
             req.user = user;
           } catch (error) {
             const errorM: ErrorModel[] = error;
-            console.log('🚀 ~ FirebaseMiddleware ~ use ~ errorM:', errorM);
+            this.logger.log('🚀 ~ FirebaseMiddleware ~ use ~ errorM:', errorM);
             errorMessages.push(...errorM);
           }
         }

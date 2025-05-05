@@ -1,0 +1,163 @@
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { Cart } from './entities/cart.entity';
+import { ExtendedRequest } from 'src/shared';
+import { User } from 'src/users/entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Product } from 'src/product/entities/product.entity';
+import { CartItem } from './entities/cart-item.entity';
+import { ProductSnapshot } from 'src/product/entities/product-snapshot.entity';
+import { CartAddProductDto } from './dto/cart-add-product.dto';
+import { UsersService } from 'src/users/users.service';
+import { ProductService } from 'src/product/product.service';
+
+@Injectable()
+export class CartService {
+  private logger = new Logger(CartService.name);
+  constructor(
+    @InjectRepository(Cart) private readonly repository: Repository<Cart>,
+    @InjectRepository(CartItem)
+    private readonly cartItemRepository: Repository<CartItem>,
+    @InjectRepository(ProductSnapshot)
+    private readonly productSnapshotRepository: Repository<ProductSnapshot>,
+    private readonly userService: UsersService,
+    private readonly productService: ProductService,
+  ) {}
+
+  get = async (req: ExtendedRequest, cartId?: number) => {
+    const { user: u } = req;
+    const user = <User>u;
+    const { id: userId } = user;
+    return await this.getOrCreate(userId, cartId);
+  };
+
+  addToCart = async (props: {
+    dto: CartAddProductDto;
+    req: ExtendedRequest;
+  }) => {
+    const { req, dto } = props;
+    const { productId } = dto;
+    const { user: u } = req;
+    const user = <User>u;
+    const cart = await this.getOrCreate(user.id);
+    const product = await this.productService.getInternal(productId);
+    if(product === null) {
+      this.logger.error(`Product ID: ${productId} not found.`)
+      throw new BadRequestException('Product not found.');
+    }
+    const { name, description, price, category, thumbnail, enabled } =
+        product;
+      const productSnapshot = await this.productSnapshotRepository.save({
+        product,
+        category,
+        thumbnail,
+        name,
+        description,
+        price,
+        enabled,
+      });
+      const cartItem = await this.cartItemRepository.findOne({
+        where: {
+          cart: { id: cart.id },
+          product: { product: { id: product.id } },
+        },
+      });
+      if (cartItem !== null) {
+        const quantity = cartItem.quantity + 1;
+        await this.cartItemRepository.save({ ...cartItem, quantity });
+      } else {
+        const quantity = 1;
+        await this.cartItemRepository.save({
+          cart,
+          quantity,
+          product: productSnapshot,
+        });
+      }
+      return await this.getOrCreate(user.id);
+  };
+
+  removeToCart = async (props: {
+    dto: CartAddProductDto;
+    req: ExtendedRequest;
+  }) => {
+    
+    const { req, dto } = props;
+    const { productId } = dto;
+    const { user: u } = req;
+    const user = <User>u;
+    const cart = await this.getOrCreate(user.id);
+    const product = await this.productService.getInternal(productId);
+    if(product === null) {
+      this.logger.error(`Product ID: ${productId} not found`);
+      throw new BadRequestException('Product not found');
+    }
+    const cartItem = await this.cartItemRepository.findOne({
+      where: {
+        cart: { id: cart.id },
+        product: { product: { id: product.id } },
+      },
+    });
+    if (cartItem !== null) {
+      if (cartItem.quantity > 1) {
+        this.logger.log('DEDUCT');
+        cartItem.quantity = cartItem.quantity - 1;
+        await this.cartItemRepository.save(cartItem);
+      } else {
+        this.logger.log('DELETE');
+        await this.cartItemRepository.delete(cartItem.id);
+      }
+    }
+    return this.getOrCreate(user.id);
+  };
+
+  checkout = async (req: ExtendedRequest, props: {id: number}) => {
+    const {id} = props;
+    this.logger.log(`Tagging Cart ID: ${id} to ${JSON.stringify({isCheckedOut: true})}`)
+    const { user: u } = req;
+    const user = <User>u;
+    const { id: userId } = user;
+    const cart = await this.getOrCreate(userId, id);
+    await this.repository.save({
+      ...cart,
+      isCheckedOut: true,
+      dateCheckedOut: new Date(),
+    });
+    this.logger.log(`Done tagging Cart ID: ${id} to ${JSON.stringify({isCheckedOut: true})}`)
+  };
+
+  private getOrCreate = async (userId: number, id?: number) => {
+    this.logger.log('Get or Create cart...');
+    this.logger.log(`User ID: ${userId}`);
+    this.logger.log(`Cart ID: ${id}`)
+    if(id) {
+      return await this.repository.findOne({
+        where: {id, user: { id: userId }, isCheckedOut: false },
+        relations: ['user', 'user.userDetail', 'cartItems', 'cartItems.product', 'cartItems.product', 'cartItems.product.product'],
+        order: {cartItems: {quantity: 'DESC'}}
+      });
+    }
+    let cart = await this.repository.findOne({
+      where: { user: { id: userId }, isCheckedOut: false },
+      relations: ['user', 'user.userDetail', 'cartItems', 'cartItems.product', 'cartItems.product', 'cartItems.product.product'],
+      order: {cartItems: {quantity: 'DESC'}}
+    });
+    if (cart === null) {
+      this.logger.log('No cart exists for user. Create a new cart');
+      const user = await this.userService.getOneInternal({ id: userId });
+      if(user === null) {
+        this.logger.error(`User ID: ${userId} not found.`);
+        throw new BadRequestException(`User not found.`)
+      }
+      cart = await this.repository.save({ user, dateCheckedOut: null });
+      cart = await this.repository.findOne({
+        where: { id: cart.id },
+        relations: ['user', 'user.userDetail', 'cartItems', 'cartItems.product', 'cartItems.product', 'cartItems.product.product'],
+        order: {cartItems: {quantity: 'DESC'}}
+      });
+      this.logger.log('New Cart', cart);
+      return cart;
+    }
+    this.logger.log('Existing Cart', cart);
+    return cart;
+  };
+}
